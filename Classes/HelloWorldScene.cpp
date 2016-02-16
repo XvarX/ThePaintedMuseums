@@ -3,6 +3,7 @@
 #include "ui/CocosGUI.h"
 #include "GifAnimation.h"
 #include "popScence.h"
+#include "HelloWorlD.h"
 
 USING_NS_CC;
 
@@ -24,35 +25,33 @@ Scene* HelloWorld::createScene()
 	return scene;
 }
 
-// on "init" you need to initialize your instance
-bool HelloWorld::init()
-{
-	if (!Layer::init())
-	{
-		return false;
-	}
+void HelloWorld::setScene() {
+	background = Sprite::create("bacground_out.jpg");
+	background->setPosition(background->getContentSize() / 2);
 
-	Size visibleSize = Director::getInstance()->getVisibleSize();
-	Vec2 origin = Director::getInstance()->getVisibleOrigin();
-
-	
-	droping = false;
-	jumping = false;
-	onStair = false;
-	//background init
-	auto rootNode = CSLoader::createNode("MainScene.csb");
-	rootNode->setTag(33);
 	Image* backgroundImage = new Image();
 	backgroundImage->initWithImageFile("background1_1in.png");
 	c_data = backgroundImage->getData();
-	background = static_cast<Sprite*>(rootNode->getChildByName("background1_1out"));
 
-	//player init
+	m_UI_Background->addChild(background);
+}
+
+void HelloWorld::setGame() {
+	//player set
 	player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
 	player->setAnchorPoint(Vec2(0.3125, 0.5));
-	Sprite* princess = Sprite::create("player.png", CCRectMake(1484, 17, 164, 281));
 
-	//constructor init
+	Sprite* princess = Sprite::create("player.png", CCRectMake(1484, 17, 164, 281));
+	//init position
+	Point playerInitPosition;
+	playerInitPosition.x = 732;
+	playerInitPosition.y = background->getContentSize().height - 3248;
+	player->setPosition(playerInitPosition);
+	princess->setPosition(Point(3728, 3847 + princess->getContentSize().height / 2));
+
+	//contactor set
+	auto backgroundterm = static_cast<Sprite*>(rootNode->getChildByName("background1_1out"));
+	backgroundterm->removeFromParentAndCleanup(true);
 	auto Contact = rootNode->getChildByName("Contact");
 	contactVector = Contact->getChildren();
 	auto Event = rootNode->getChildByName("Event");
@@ -60,6 +59,12 @@ bool HelloWorld::init()
 	auto Door = rootNode->getChildByName("Door");
 	doorsVector = Door->getChildren();
 
+	m_UI_Game->addChild(rootNode);
+	m_UI_Game->addChild(player);
+	m_UI_Game->addChild(princess);
+}
+
+void HelloWorld::configPhy() {
 	//init door
 	for (int i = 0; i < doorsVector.size();i++) {
 		Sprite *projectile = (CCSprite *)doorsVector.at(i);
@@ -112,17 +117,69 @@ bool HelloWorld::init()
 			backgroundBody->addShape(PhysicsShapePolygon::create(points, num));
 		}
 	}
+}
 
-	//position  init
-	background->setPosition(background->getContentSize() / 2);
-	Point playerInitPosition;
-	playerInitPosition.x = 732;
-	playerInitPosition.y = background->getContentSize().height - 3248;
-	player->setPosition(playerInitPosition);
-	princess->setPosition(Point(3728, 3847 + princess->getContentSize().height / 2));
+void HelloWorld::configSchedule() {
+	//fix update to avoid body pass through
+	scheduleOnce(CC_SCHEDULE_SELECTOR(HelloWorld::updateStart), 2);
 
+	//playerMove schedule
+	schedule(schedule_selector(HelloWorld::playerMove), 1.0 / 60, kRepeatForever, 0);
+	schedule(schedule_selector(HelloWorld::conTact), 1.0 / 60, kRepeatForever, 0);
+	schedule(schedule_selector(HelloWorld::canMove), 1.0 / 60, kRepeatForever, 0);
+}
 
+void HelloWorld::configEventListener() {
+	auto keylistener = EventListenerKeyboard::create();
+	keylistener->setEnabled(true);
+	keylistener->onKeyPressed = CC_CALLBACK_2(HelloWorld::onKeyPressed, this);
+	keylistener->onKeyReleased = CC_CALLBACK_2(HelloWorld::onKeyReleased, this);
+	_eventDispatcher->addEventListenerWithFixedPriority(keylistener, -100);
+	stairBlue = getPixelColorByPoint(Point(7512, 3892));
+}
+// on "init" you need to initialize your instance
+bool HelloWorld::initLayer() {
+	auto origin = Director::getInstance()->getVisibleOrigin();
+	m_UI_Dialog = Layer::create();
+	m_UI_Dialog->setPosition(origin);
+	this->addChild(m_UI_Dialog, 40);
 
+	m_UI_Tool = Layer::create();
+	m_UI_Tool->setPosition(origin);
+	this->addChild(m_UI_Tool, 30);
+
+	m_UI_Game = Layer::create();
+	m_UI_Game->setPosition(origin);
+	this->addChild(m_UI_Game, 20);
+
+	m_UI_Background = Layer::create();
+	m_UI_Background->setPosition(origin);
+	this->addChild(m_UI_Background, 10);
+
+	return true;
+}
+
+void HelloWorld::initDialog() {
+
+}
+bool HelloWorld::init()
+{
+	if (!Layer::init())
+	{
+		return false;
+	}
+
+	droping = false;
+	jumping = false;
+	onStair = false;
+	canmove = true;
+	rootNode = CSLoader::createNode("MainScene.csb");
+	initLayer();
+	setScene();
+	setGame();
+	configPhy();
+	configSchedule();
+	configEventListener();
 	//background follow
 	auto follow = Follow::create(player);
 	this->runAction(follow);
@@ -142,25 +199,6 @@ bool HelloWorld::init()
 	addChild(sp,2);
 	sp->runAction(Animate::create(pAnimation));*/
 
-	addChild(rootNode,1);
-	addChild(player,2);
-	//schedul
-
-	//fix update to avoid body pass through
-	scheduleOnce(CC_SCHEDULE_SELECTOR(HelloWorld::updateStart), 2);
-
-	//playerMove schedule
-	schedule(schedule_selector(HelloWorld::playerMove), 1.0 / 60, kRepeatForever, 0);
-	schedule(schedule_selector(HelloWorld::conTact), 1.0 / 60, kRepeatForever, 0);
-
-	//keyboard listener
-	auto keylistener = EventListenerKeyboard::create();
-	keylistener->setEnabled(true);
-	keylistener->onKeyPressed = CC_CALLBACK_2(HelloWorld::onKeyPressed, this);
-	keylistener->onKeyReleased = CC_CALLBACK_2(HelloWorld::onKeyReleased, this);
-	_eventDispatcher->addEventListenerWithSceneGraphPriority(keylistener, this);
-	stairBlue = getPixelColorByPoint(Point(7512, 3892));
-
 	//event listener
 	return true;
 }
@@ -179,37 +217,39 @@ void HelloWorld::onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* e
 	}
 }
 void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
-	if (keyCode == EventKeyboard::KeyCode::KEY_A) {
-		left = true;
-	}
-	else if (keyCode == EventKeyboard::KeyCode::KEY_D) {
-		right = true;
-	}
-	if (keyCode == EventKeyboard::KeyCode::KEY_W) {
-		auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
-			jumping = false;
-		});
-		if (!jumping&&!droping&&!onStair) {
-			jumping = true;
-			auto jumpBy = JumpBy::create(0.5, Vec2(0, 130), 0, 1);
-			auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
-			player->runAction(action);
+	if (canmove) {
+		if (keyCode == EventKeyboard::KeyCode::KEY_A) {
+			left = true;
 		}
-		if (onStair) {
-			up = true;
+		else if (keyCode == EventKeyboard::KeyCode::KEY_D) {
+			right = true;
 		}
-	}
-	if (keyCode == EventKeyboard::KeyCode::KEY_S) {
-		if (onStair) {
-			down = true;
+		if (keyCode == EventKeyboard::KeyCode::KEY_W) {
+			auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
+				jumping = false;
+			});
+			if (!jumping&&!droping&&!onStair) {
+				jumping = true;
+				auto jumpBy = JumpBy::create(0.5, Vec2(0, 130), 0, 1);
+				auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
+				player->runAction(action);
+			}
+			if (onStair) {
+				up = true;
+			}
 		}
-	}
-	if (keyCode == EventKeyboard::KeyCode::KEY_J) {
-		for (int i = 0; i < itemsVector.size();i++) {
-			Sprite *projectile = (CCSprite *)itemsVector.at(i);
-			if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-				this->removeChildByName("hairpin");
-				player->addChild(projectile);
+		if (keyCode == EventKeyboard::KeyCode::KEY_S) {
+			if (onStair) {
+				down = true;
+			}
+		}
+		if (keyCode == EventKeyboard::KeyCode::KEY_J) {
+			for (int i = 0; i < itemsVector.size();i++) {
+				Sprite *projectile = (CCSprite *)itemsVector.at(i);
+				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+					m_UI_Game->removeChildByName("hairpin");
+					player->addChild(projectile);
+				}
 			}
 		}
 	}
@@ -221,13 +261,20 @@ void HelloWorld::updateStart(float delta)
 	scheduleUpdate();
 }
 
+void HelloWorld::canMove(float delta) {
+	canmove = true;
+	if (this->getChildByName("duihuakuang") != NULL) {
+		canmove = false;
+	}
+}
+
 void HelloWorld::conTact(float delta) {
 	for (int i = 0; i < contactVector.size();i++) {
 		Sprite *projectile = (CCSprite *)contactVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
 			if (projectile->getName() == "Contact001") {
 				if (player->getChildByName("hairpin") != NULL) {
-					getChildByTag(33)->getChildByName("Door")->removeChildByName("Door001");
+					rootNode->getChildByName("Door")->removeChildByName("Door001");
 				}
 			}
 		}
@@ -245,10 +292,16 @@ void HelloWorld::conTact(float delta) {
 					}
 				}
 				if (!findit) {
+					auto pop = PopScene::createScene();
+					pop->setName("pop");
+					m_UI_Dialog->addChild(pop);
+					auto pos = this->getPosition();
+					Size visibleSize = Director::getInstance()->getVisibleSize();
+					Vec2 origin = Director::getInstance()->getVisibleOrigin();
 					Sprite* hairpin = Sprite::create("player.png", CCRectMake(2069, 926, 155, 155));
 					hairpin->setName("hairpin");
 					hairpin->setPosition(Vec2(2734, 3947));
-					this->addChild(hairpin, 2);
+					m_UI_Game->addChild(hairpin);
 					itemsVector.pushBack(hairpin);
 				}
 			}
