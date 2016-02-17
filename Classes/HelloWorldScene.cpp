@@ -38,9 +38,33 @@ void HelloWorld::setScene() {
 
 void HelloWorld::setGame() {
 	//player set
+	//player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
+
+	GifAnimationDef* def = new GifAnimationDef;
+	def->loops = -1;						// 循环次数
+	def->filePath = "g1.gif";				// 文件路径
+	def->delayPerUnit = 1.0/60.0;			// 每帧间隔
+	def->restoreOriginalFrame = false;	// 还原初始状态
+
+	// 创建动画
+	pStand = GifAnimation::getInstance()->createAnimation(*def);
+
+	GifAnimationDef* def_ = new GifAnimationDef;
+	def_->loops = -1;						// 循环次数
+	def_->filePath = "g2.gif";				// 文件路径
+	def_->delayPerUnit = 1.0 / 60.0;			// 每帧间隔
+	def_->restoreOriginalFrame = false;	// 还原初始状态
+
+										// 创建动画
+	pWalk = GifAnimation::getInstance()->createAnimation(*def_);
+
+	// 创建精灵播放动画
 	player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
 	player->setAnchorPoint(Vec2(0.3125, 0.5));
-
+	player->runAction(Animate::create(pStand));
+	player->runAction(FlipX::create(true));
+	player->setScale(0.5);
+	auto a = player->getContentSize();
 	Sprite* princess = Sprite::create("player.png", CCRectMake(1484, 17, 164, 281));
 	//init position
 	Point playerInitPosition;
@@ -127,6 +151,7 @@ void HelloWorld::configSchedule() {
 	schedule(schedule_selector(HelloWorld::playerMove), 1.0 / 60, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::conTact), 1.0 / 60, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::canMove), 1.0 / 60, kRepeatForever, 0);
+	schedule(schedule_selector(HelloWorld::changeLocation), 1.0 / 60, kRepeatForever, 0);
 }
 
 void HelloWorld::configEventListener() {
@@ -168,11 +193,12 @@ bool HelloWorld::init()
 	{
 		return false;
 	}
-
+	playerState = 0;
 	droping = false;
 	jumping = false;
 	onStair = false;
 	canmove = true;
+	Location = true;
 	rootNode = CSLoader::createNode("MainScene.csb");
 	initLayer();
 	setScene();
@@ -183,21 +209,6 @@ bool HelloWorld::init()
 	//background follow
 	auto follow = Follow::create(player);
 	this->runAction(follow);
-
-	/*GifAnimationDef* def = new GifAnimationDef;
-	def->loops = 1;						// 循环次数
-	def->filePath = "g1.gif";				// 文件路径
-	def->delayPerUnit = 1.0/60.0;			// 每帧间隔
-	def->restoreOriginalFrame = false;	// 还原初始状态
-
-										// 创建动画
-	auto pAnimation = GifAnimation::getInstance()->createAnimation(*def);
-
-	// 创建精灵播放动画
-	auto sp = Sprite::create();
-	sp->setPosition(player->getPosition());
-	addChild(sp,2);
-	sp->runAction(Animate::create(pAnimation));*/
 
 	//event listener
 	return true;
@@ -294,7 +305,11 @@ void HelloWorld::conTact(float delta) {
 				if (!findit) {
 					auto pop = PopScene::createScene();
 					pop->setName("pop");
+					int *a = new int;
+					*a = 5;
+					pop->setUserData(a);
 					m_UI_Dialog->addChild(pop);
+
 					auto pos = this->getPosition();
 					Size visibleSize = Director::getInstance()->getVisibleSize();
 					Vec2 origin = Director::getInstance()->getVisibleOrigin();
@@ -319,6 +334,12 @@ void HelloWorld::playerMove(float delta) {
 void HelloWorld::playerWalk() {
 	if (!onStair) {
 		if (left == true) {
+			Location = false;
+			if (playerState == 0) {
+				player->stopAllActions();
+				player->runAction(Animate::create(pWalk));
+				playerState = 1;
+			}
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			if (speed.x >= 0) {
 				speed.x = -200;
@@ -330,6 +351,12 @@ void HelloWorld::playerWalk() {
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		else if (right == true) {
+			Location = true;
+			if (playerState == 0) {
+				player->stopAllActions();
+				player->runAction(Animate::create(pWalk));
+				playerState = 1;
+			}
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			if (speed.x <= 0) {
 				speed.x = 200;
@@ -340,16 +367,15 @@ void HelloWorld::playerWalk() {
 			}
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
-		if (right == true && left == true) {
+		if (right == left) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			speed.x = 0;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
-
-		}
-		if (right == false && left == false) {
-			Vec2 speed = player->getPhysicsBody()->getVelocity();
-			speed.x = 0;
-			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			if (playerState == 1) {
+				player->stopAllActions();
+				player->runAction(Animate::create(pStand));
+				playerState = 0;
+			}
 		}
 	}
 	else {
@@ -377,10 +403,14 @@ void HelloWorld::update(float dt)
 		m_world->step(1 / 180.0f);
 	}
 }
+void HelloWorld::changeLocation(float dt) {
+	player->setFlippedX(Location);
+}
 void HelloWorld::drop() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_front_x = player->getPosition().x;
-	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height / 2);
+	auto a = player->getContentSize();
+	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height/4);
 	unsigned int image_after_x = image_front_x + 40;
 	unsigned int image_after_y = image_front_y;
 	ccColor4B c_front = getPixelColorByPoint(Point(image_front_x, image_front_y));
@@ -404,7 +434,7 @@ void HelloWorld::fixPosition() {
 		Point playerPosition = player->getPosition();
 		unsigned int image_x = player->getPosition().x;
 		unsigned int image_y = background->getContentSize().height -
-			(player->getPosition().y - player->getContentSize().height / 2);
+			(player->getPosition().y - player->getContentSize().height / 4);
 		ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (leftBottom.a == 255&&leftBottom.g < 100) {
@@ -421,7 +451,7 @@ void HelloWorld::fixPosition() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x;
 	unsigned int image_y = background->getContentSize().height -
-		(player->getPosition().y - player->getContentSize().height / 2);
+		(player->getPosition().y - player->getContentSize().height / 4);
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	leftBottom = getPixelColorByPoint(Point(image_x, image_y+20));
 	if (leftBottom == stairBlue) {
@@ -441,7 +471,7 @@ int HelloWorld::wallBesideLeft() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x-10;
 	unsigned int image_y = background->getContentSize().height -
-		(player->getPosition().y - player->getContentSize().height / 2) - 10;
+		(player->getPosition().y - player->getContentSize().height / 4) - 10;
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	image_y -= 20;
 	ccColor4B leftTop = getPixelColorByPoint(Point(image_x, image_y));
@@ -460,7 +490,7 @@ int HelloWorld::wallBesideRight() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x + 10;
 	unsigned int image_y = background->getContentSize().height -
-		(player->getPosition().y - player->getContentSize().height / 2) - 10;
+		(player->getPosition().y - player->getContentSize().height / 4) - 10;
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	image_y -= 20;
 	ccColor4B leftTop = getPixelColorByPoint(Point(image_x, image_y));

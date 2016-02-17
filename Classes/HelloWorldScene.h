@@ -34,6 +34,7 @@ public:
 	void playerMove(float delta);
 	void conTact(float delta);
 	void canMove(float delta);
+	void changeLocation(float delta);
 	void fixPosition();
 	void showTalk();
 	int wallBesideRight();
@@ -54,7 +55,11 @@ private:
 	bool jumping;
 	bool canmove;
 	bool onStair;
+	bool Location;
+	int playerState;
 
+	Animation* pStand;
+	Animation* pWalk;
 	ccColor4B stairBlue;
 	Vector<Node*> contactVector;
 	Vector<Node*> eventVector;

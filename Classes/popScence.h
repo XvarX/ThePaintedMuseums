@@ -8,6 +8,7 @@ class PopScene : public cocos2d::Layer
 {
 public:
 	static cocos2d::Scene* createScene();
+	int hahaha;
 	bool init();
 	virtual void onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
 	CREATE_FUNC(PopScene);

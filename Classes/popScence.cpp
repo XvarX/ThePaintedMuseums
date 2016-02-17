@@ -63,6 +63,8 @@ void PopScene::setContent()
 }
 
 void PopScene::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
+	int* a = (int*)this->getParent()->getUserData();
+	int b = *a;
 	keylistener_->setEnabled(false);
 	Layer::onExit();
 	this->getParent()->removeFromParentAndCleanup(true);
