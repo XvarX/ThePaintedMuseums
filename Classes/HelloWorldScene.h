@@ -6,8 +6,10 @@
 #include <listeneradapter.h>
 #include "Gif\GifBase.h"
 #include "Gif\InstantGif.h"
+#include <string>
 
 USING_NS_CC;
+using namespace std;
 class HelloWorld : public cocos2d::Layer
 {
 public:
@@ -35,6 +37,7 @@ public:
 	void conTact(float delta);
 	void canMove(float delta);
 	void changeLocation(float delta);
+	void addNewItem(string itemName, Point ItemPos, int a, int b, int c, int d);
 	void fixPosition();
 	void showTalk();
 	int wallBesideRight();
@@ -55,6 +58,7 @@ private:
 	bool jumping;
 	bool canmove;
 	bool onStair;
+	bool standBy;
 	bool Location;
 	int playerState;
 
@@ -63,8 +67,12 @@ private:
 	ccColor4B stairBlue;
 	Vector<Node*> contactVector;
 	Vector<Node*> eventVector;
-	Vector<Node*> itemsVector;
+	Vector<Node*> itemsVectorInMap;
+	Vector<Node*> itemsVectorInPlayer;
 	Vector<Node*> doorsVector;
+	Vector<Node*> stairsVector;
+	Vector<Node*> objectsVector;
+	Vector<Node*> StandBysVector;
 
 	Layer* m_UI_Dialog;			//对话框层 最高层
 	Layer* m_UI_Tool;			//工具栏层 次高层

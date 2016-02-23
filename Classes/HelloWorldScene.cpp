@@ -3,6 +3,7 @@
 #include "ui/CocosGUI.h"
 #include "GifAnimation.h"
 #include "popScence.h"
+#include "Construct.h"
 #include "HelloWorlD.h"
 
 USING_NS_CC;
@@ -61,15 +62,17 @@ void HelloWorld::setGame() {
 	// 创建精灵播放动画
 	player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
 	player->setAnchorPoint(Vec2(0.3125, 0.5));
-	player->runAction(Animate::create(pStand));
+	Animate* aStand = Animate::create(pStand);
+	aStand->setTag(20);
+	player->runAction(aStand);
 	player->runAction(FlipX::create(true));
 	player->setScale(0.5);
 	auto a = player->getContentSize();
 	Sprite* princess = Sprite::create("player.png", CCRectMake(1484, 17, 164, 281));
 	//init position
 	Point playerInitPosition;
-	playerInitPosition.x = 732;
-	playerInitPosition.y = background->getContentSize().height - 3248;
+	playerInitPosition.x = 500;
+	playerInitPosition.y = 4500;
 	player->setPosition(playerInitPosition);
 	princess->setPosition(Point(3728, 3847 + princess->getContentSize().height / 2));
 
@@ -80,9 +83,24 @@ void HelloWorld::setGame() {
 	contactVector = Contact->getChildren();
 	auto Event = rootNode->getChildByName("Event");
 	eventVector = Event->getChildren();
+	for (int i = 0; i < eventVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)eventVector.at(i);
+		Construct *newObject = new Construct(projectile->getName(), i);
+		projectile->setUserData(newObject);
+	}
 	auto Door = rootNode->getChildByName("Door");
 	doorsVector = Door->getChildren();
-
+	auto Object = rootNode->getChildByName("Object");
+	objectsVector = Object->getChildren();
+	auto Stair = rootNode->getChildByName("Stair");
+	stairsVector = Stair->getChildren();
+	for (int i = 0; i < objectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)objectsVector.at(i);
+		Construct *newObject = new Construct(projectile->getName(), i);
+		projectile->setUserData(newObject);
+	}
+	auto StandBy = rootNode->getChildByName("StandBy");
+	StandBysVector = StandBy->getChildren();
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
@@ -111,7 +129,6 @@ void HelloWorld::configPhy() {
 	auto playerBody = PhysicsBody::createBox(Size(135, player->getContentSize().height), PhysicsMaterial::PhysicsMaterial(0, 0, 0));
 	playerBody->setRotationEnable(false);
 	playerBody->setGravityEnable(false);
-	playerBody->setPositionOffset(Vec2(-48, 0));
 	player->setPhysicsBody(playerBody);
 
 	//physics background init
@@ -197,6 +214,7 @@ bool HelloWorld::init()
 	droping = false;
 	jumping = false;
 	onStair = false;
+	standBy = false;
 	canmove = true;
 	Location = true;
 	rootNode = CSLoader::createNode("MainScene.csb");
@@ -241,7 +259,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			});
 			if (!jumping&&!droping&&!onStair) {
 				jumping = true;
-				auto jumpBy = JumpBy::create(0.5, Vec2(0, 130), 0, 1);
+				auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
 				auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
 				player->runAction(action);
 			}
@@ -250,16 +268,125 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			}
 		}
 		if (keyCode == EventKeyboard::KeyCode::KEY_S) {
-			if (onStair) {
+			if (onStair||standBy) {                                             
 				down = true;
 			}
 		}
 		if (keyCode == EventKeyboard::KeyCode::KEY_J) {
-			for (int i = 0; i < itemsVector.size();i++) {
-				Sprite *projectile = (CCSprite *)itemsVector.at(i);
+			for (int i = 0; i < itemsVectorInMap.size();i++) {
+				Sprite *projectile = (CCSprite *)itemsVectorInMap.at(i);
 				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-					m_UI_Game->removeChildByName("hairpin");
-					player->addChild(projectile);
+						if (itemsVectorInPlayer.find(projectile) == itemsVectorInPlayer.end()) {
+							m_UI_Game->removeChild(projectile);
+							player->addChild(projectile);
+							itemsVectorInPlayer.pushBack(projectile);
+						}
+				}
+			}
+			for (int i = 0; i < contactVector.size(); i++) {
+				Sprite *projectile = (CCSprite *)contactVector.at(i);
+				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+					if (projectile->getName() == "Contact001") {
+						if (player->getChildByName("hairpin") != NULL) {
+							rootNode->getChildByName("Door")->removeChildByName("Door001");
+						}
+					}
+				}
+			}
+			for (int i = 0; i < objectsVector.size(); i++) {
+				Sprite *projectile = (CCSprite *)objectsVector.at(i);
+				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+					if (projectile->getName() == "Object008") {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							object->setState(-1);
+							addNewItem("umbrella", Point(4640, 1801), 2291, 926, 155, 155);
+						}
+					}
+					if (projectile->getName() == "Object009") {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							object->setState(-1);
+							int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
+							addNewItem("bucket", Point(5250, y), 2520, 926, 155, 155);
+						}
+					}
+					if (projectile->getName() == "Object012") {
+						if (player->getChildByName("umbrella") != NULL) {
+							auto object = (Construct*)projectile->getUserData();
+							if (object->getState() != -1) {
+								object->setState(-1);
+								//play
+								rootNode->getChildByName("Door")->removeChildByName("Door00a");
+							}
+						}
+					}
+					if (projectile->getName() == "Object013") {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							object->setState(-1);
+							int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
+							addNewItem("oilbucket", Point(6680, 5158), 2071, 1127, 155, 155);
+						}
+					}
+					if (projectile->getName() == "Object015") {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							object->setState(-1);
+							rootNode->getChildByName("Door")->removeChildByName("Door002");
+						}
+					}
+					if (projectile->getName() == "Object018") {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							object->setState(-1);
+							addNewItem("roomKey", projectile->getPosition(), 2290, 1127, 155, 155);
+						}
+					}
+					if (projectile->getName() == "Object020") {
+						if (player->getChildByName("roomKey") != NULL) {
+							auto object = (Construct*)projectile->getUserData();
+							if (object->getState() != -1) {
+								object->setState(-1);
+								//play
+								rootNode->getChildByName("Door")->removeChildByName("Door004");
+							}
+						}
+					}
+					if (projectile->getName() == "Object022") {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							object->setState(-1);
+							addNewItem("match", projectile->getPosition(), 2520, 1127, 155, 155);
+						}
+					}
+					if (projectile->getName() == "Object025") {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							if (object->getState() == 0) {
+								if (player->getChildByName("oilbucket") != NULL) {
+									object->setState(1);
+									//play
+								}
+							}
+							else if (object->getState() == 1) {
+								if (player->getChildByName("match") != NULL) {
+									Sprite *event008 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event008");
+									auto eventobject = (Construct*)event008->getUserData();
+									eventobject->setState(1);
+									object->setState(-1);
+									//play
+								}
+							}
+						}
+					}
+					if (projectile->getName() == "Object026") {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							object->setState(-1);
+							rootNode->getChildByName("Door")->removeChildByName("Door006");
+						}
+					}
 				}
 			}
 		}
@@ -280,46 +407,56 @@ void HelloWorld::canMove(float delta) {
 }
 
 void HelloWorld::conTact(float delta) {
-	for (int i = 0; i < contactVector.size();i++) {
-		Sprite *projectile = (CCSprite *)contactVector.at(i);
-		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-			if (projectile->getName() == "Contact001") {
-				if (player->getChildByName("hairpin") != NULL) {
-					rootNode->getChildByName("Door")->removeChildByName("Door001");
-				}
-			}
-		}
-	}
 	for (int i = 0; i < eventVector.size();i++) {
 		Sprite *projectile = (CCSprite *)eventVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
 			if (projectile->getName() == "Event001") {
 				bool findit = false;
-				for (int j = 0; j < itemsVector.size(); j++) {
-					Sprite *itemile = (CCSprite *)itemsVector.at(i);
+				for (int j = 0; j < itemsVectorInMap.size(); j++) {
+					Sprite *itemile = (CCSprite *)itemsVectorInMap.at(j);
 					if (itemile->getName() == "hairpin") {
 						findit = true;
 						break;
 					}
 				}
 				if (!findit) {
-					auto pop = PopScene::createScene();
+					/*auto pop = PopScene::createScene();
 					pop->setName("pop");
 					int *a = new int;
 					*a = 5;
 					pop->setUserData(a);
-					m_UI_Dialog->addChild(pop);
-
-					auto pos = this->getPosition();
-					Size visibleSize = Director::getInstance()->getVisibleSize();
-					Vec2 origin = Director::getInstance()->getVisibleOrigin();
+					m_UI_Dialog->addChild(pop);*/
 					Sprite* hairpin = Sprite::create("player.png", CCRectMake(2069, 926, 155, 155));
 					hairpin->setName("hairpin");
 					hairpin->setPosition(Vec2(2734, 3947));
 					m_UI_Game->addChild(hairpin);
-					itemsVector.pushBack(hairpin);
+					itemsVectorInMap.pushBack(hairpin);
 				}
 			}
+			if (projectile->getName() == "Event005") {
+				rootNode->getChildByName("Door")->removeChildByName("Door003");
+			}
+			if (projectile->getName() == "Event008") {
+				auto object = (Construct*)projectile->getUserData();
+				if (object->getState() == 1) {
+					object->setState(-1);
+					rootNode->getChildByName("Object")->removeChildByName("Object011");
+				}
+			}
+		}
+	}
+	onStair = false;
+	for (int i = 0; i < stairsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)stairsVector.at(i);
+		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+			onStair = true;
+		}
+	}
+	standBy = false;
+	for (int i = 0; i < StandBysVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)StandBysVector.at(i);
+		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+			standBy = true;
 		}
 	}
 }
@@ -332,53 +469,57 @@ void HelloWorld::playerMove(float delta) {
 	fixPosition();
 }
 void HelloWorld::playerWalk() {
-	if (!onStair) {
-		if (left == true) {
-			Location = false;
-			if (playerState == 0) {
-				player->stopAllActions();
-				player->runAction(Animate::create(pWalk));
-				playerState = 1;
-			}
-			Vec2 speed = player->getPhysicsBody()->getVelocity();
-			if (speed.x >= 0) {
-				speed.x = -200;
-			}
-			int haha = wallBesideLeft();
-			if (haha == 1) {
-				speed.x = 0;
-			}
-			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+	if (left == true) {
+		Location = false;
+		if (playerState == 0) {
+			player->stopActionByTag(20);
+			Animate* aWalk = Animate::create(pWalk);
+			aWalk->setTag(30);
+			player->runAction(aWalk);
+			playerState = 1;
 		}
-		else if (right == true) {
-			Location = true;
-			if (playerState == 0) {
-				player->stopAllActions();
-				player->runAction(Animate::create(pWalk));
-				playerState = 1;
-			}
-			Vec2 speed = player->getPhysicsBody()->getVelocity();
-			if (speed.x <= 0) {
-				speed.x = 200;
-			}
-			int haha = wallBesideRight();
-			if (haha == 1) {
-				speed.x = 0;
-			}
-			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		Vec2 speed = player->getPhysicsBody()->getVelocity();
+		if (speed.x >= 0) {
+			speed.x = -200;
 		}
-		if (right == left) {
-			Vec2 speed = player->getPhysicsBody()->getVelocity();
+		int haha = wallBesideLeft();
+		if (haha == 1) {
 			speed.x = 0;
-			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
-			if (playerState == 1) {
-				player->stopAllActions();
-				player->runAction(Animate::create(pStand));
-				playerState = 0;
-			}
+		}
+		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+	}
+	else if (right == true) {
+		Location = true;
+		if (playerState == 0) {
+			player->stopActionByTag(20);
+			Animate* aWalk = Animate::create(pWalk);
+			aWalk->setTag(30);
+			player->runAction(aWalk);
+			playerState = 1;
+		}
+		Vec2 speed = player->getPhysicsBody()->getVelocity();
+		if (speed.x <= 0) {
+			speed.x = 200;
+		}
+		int haha = wallBesideRight();
+		if (haha == 1) {
+			speed.x = 0;
+		}
+		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+	}
+	if (right == left) {
+		Vec2 speed = player->getPhysicsBody()->getVelocity();
+		speed.x = 0;
+		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		if (playerState == 1) {
+			player->stopActionByTag(30);
+			Animate* aStand = Animate::create(pStand);
+			aStand->setTag(20);
+			player->runAction(aStand);
+			playerState = 0;
 		}
 	}
-	else {
+	if (onStair) {
 		if (up == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			speed.x = 0;
@@ -393,6 +534,14 @@ void HelloWorld::playerWalk() {
 		}
 		if (up == down) {
 			player->getPhysicsBody()->setVelocity(Vec2(0, 0));
+		}
+	}
+	if (standBy) {
+		if (down == true) {
+			Vec2 speed = player->getPhysicsBody()->getVelocity();
+			speed.x = 0;
+			speed.y = -200;
+			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 	}
 }
@@ -454,18 +603,6 @@ void HelloWorld::fixPosition() {
 		(player->getPosition().y - player->getContentSize().height / 4);
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	leftBottom = getPixelColorByPoint(Point(image_x, image_y+20));
-	if (leftBottom == stairBlue) {
-		onStair = true;
-	}
-	else {
-		leftBottom = getPixelColorByPoint(Point(image_x, image_y + 50));
-		if (leftBottom == stairBlue) {
-			onStair = true;
-		}
-		else {
-			onStair = false;
-		}
-	}
 }
 int HelloWorld::wallBesideLeft() {
 	Point playerPosition = player->getPosition();
@@ -516,5 +653,21 @@ ccColor4B HelloWorld::getPixelColorByPoint(Point pos) {
 	c.a = (*pixel >> 24) & 0xff;
 	return c;
 }
-
+void HelloWorld::addNewItem(string itemName, Point pos, int a, int b, int c, int d) {
+	bool findit = false;
+	for (int j = 0; j < itemsVectorInMap.size(); j++) {
+		Sprite *itemile = (CCSprite *)itemsVectorInMap.at(j);
+		if (itemile->getName() == itemName) {
+			findit = true;
+			break;
+		}
+	}
+	if (!findit) {
+		Sprite* item = Sprite::create("player.png", CCRectMake(a, b, c, d));
+		item->setName(itemName);
+		item->setPosition(pos);
+		m_UI_Game->addChild(item);
+		itemsVectorInMap.pushBack(item);
+	}
+}
 //move finish
