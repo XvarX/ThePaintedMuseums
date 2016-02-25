@@ -40,6 +40,7 @@ public:
 	void addNewItem(string itemName, Point ItemPos, int a, int b, int c, int d);
 	void fixPosition();
 	void showTalk();
+	void setPlayerPositionByZone(Sprite* player, Node* zone);
 	int wallBesideRight();
 	ccColor4B getPixelColorByPoint(Point pos);
     // implement the "static create()" method manually

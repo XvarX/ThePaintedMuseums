@@ -42,7 +42,7 @@ void HelloWorld::setGame() {
 	//player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
 
 	GifAnimationDef* def = new GifAnimationDef;
-	def->loops = -1;						// 循环次数
+	def->loops = 1;						// 循环次数
 	def->filePath = "g1.gif";				// 文件路径
 	def->delayPerUnit = 1.0/60.0;			// 每帧间隔
 	def->restoreOriginalFrame = false;	// 还原初始状态
@@ -66,16 +66,10 @@ void HelloWorld::setGame() {
 	aStand->setTag(20);
 	player->runAction(aStand);
 	player->runAction(FlipX::create(true));
-	player->setScale(0.5);
+	//player->setScale(0.5);
 	auto a = player->getContentSize();
-	Sprite* princess = Sprite::create("player.png", CCRectMake(1484, 17, 164, 281));
-	//init position
-	Point playerInitPosition;
-	playerInitPosition.x = 500;
-	playerInitPosition.y = 4500;
-	player->setPosition(playerInitPosition);
-	princess->setPosition(Point(3728, 3847 + princess->getContentSize().height / 2));
-
+	Sprite* princess = Sprite::create("princess.png");
+	princess->setName("princess");
 	//contactor set
 	auto backgroundterm = static_cast<Sprite*>(rootNode->getChildByName("background1_1out"));
 	backgroundterm->removeFromParentAndCleanup(true);
@@ -101,6 +95,12 @@ void HelloWorld::setGame() {
 	}
 	auto StandBy = rootNode->getChildByName("StandBy");
 	StandBysVector = StandBy->getChildren();
+
+	//init position
+	auto zone001 = rootNode->getChildByName("Zone")->getChildByName("Zone001");
+	auto zone002 = rootNode->getChildByName("Zone")->getChildByName("Zone002");
+	setPlayerPositionByZone(player, zone001);
+	setPlayerPositionByZone(princess, zone002);
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
@@ -216,7 +216,7 @@ bool HelloWorld::init()
 	onStair = false;
 	standBy = false;
 	canmove = true;
-	Location = true;
+	Location = false;
 	rootNode = CSLoader::createNode("MainScene.csb");
 	initLayer();
 	setScene();
@@ -246,7 +246,6 @@ void HelloWorld::onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* e
 	}
 }
 void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
-	if (canmove) {
 		if (keyCode == EventKeyboard::KeyCode::KEY_A) {
 			left = true;
 		}
@@ -283,19 +282,23 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						}
 				}
 			}
-			for (int i = 0; i < contactVector.size(); i++) {
-				Sprite *projectile = (CCSprite *)contactVector.at(i);
-				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-					if (projectile->getName() == "Contact001") {
-						if (player->getChildByName("hairpin") != NULL) {
-							rootNode->getChildByName("Door")->removeChildByName("Door001");
-						}
-					}
-				}
-			}
+			
 			for (int i = 0; i < objectsVector.size(); i++) {
 				Sprite *projectile = (CCSprite *)objectsVector.at(i);
 				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+					if (projectile->getName() == "Object001") {
+						if (player->getChildByName("hairpin") != NULL) {
+							auto object = (Construct*)projectile->getUserData();
+							if (object->getState() != -1) {
+								object->setState(-1);
+								rootNode->getChildByName("Door")->removeChildByName("Door001");
+								auto posZone4 = rootNode->getChildByName("Zone")->getChildByName("Zone004");
+								auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
+
+								princess->runAction(MoveTo::create(5.0, Point(posZone4->getPosition().x, princess->getPosition().y)));
+							}
+						}
+					}
 					if (projectile->getName() == "Object008") {
 						auto object = (Construct*)projectile->getUserData();
 						if (object->getState() != -1) {
@@ -350,6 +353,11 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								object->setState(-1);
 								//play
 								rootNode->getChildByName("Door")->removeChildByName("Door004");
+								Sprite* dad = Sprite::create("dad.png");
+								dad->setName("dad");
+								auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
+								m_UI_Game->addChild(dad);
+								setPlayerPositionByZone(dad, zone006);
 							}
 						}
 					}
@@ -376,6 +384,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 									eventobject->setState(1);
 									object->setState(-1);
 									//play
+									auto posZone7 = rootNode->getChildByName("Zone")->getChildByName("Zone007");
+									auto dad = (Sprite*)m_UI_Game->getChildByName("dad");
+
+									dad->runAction(MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y)));
 								}
 							}
 						}
@@ -385,12 +397,14 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						if (object->getState() != -1) {
 							object->setState(-1);
 							rootNode->getChildByName("Door")->removeChildByName("Door006");
+							Sprite *event010 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event010");
+							auto eventobject = (Construct*)event010->getUserData();
+							eventobject->setState(1);
 						}
 					}
 				}
 			}
 		}
-	}
 }
 
 void HelloWorld::updateStart(float delta)
@@ -400,10 +414,6 @@ void HelloWorld::updateStart(float delta)
 }
 
 void HelloWorld::canMove(float delta) {
-	canmove = true;
-	if (this->getChildByName("duihuakuang") != NULL) {
-		canmove = false;
-	}
 }
 
 void HelloWorld::conTact(float delta) {
@@ -411,26 +421,45 @@ void HelloWorld::conTact(float delta) {
 		Sprite *projectile = (CCSprite *)eventVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
 			if (projectile->getName() == "Event001") {
-				bool findit = false;
-				for (int j = 0; j < itemsVectorInMap.size(); j++) {
-					Sprite *itemile = (CCSprite *)itemsVectorInMap.at(j);
-					if (itemile->getName() == "hairpin") {
-						findit = true;
-						break;
+				auto object = (Construct*)projectile->getUserData();
+				if (object->getState() == 0) {
+					bool findit = false;
+					for (int j = 0; j < itemsVectorInMap.size(); j++) {
+						Sprite *itemile = (CCSprite *)itemsVectorInMap.at(j);
+						if (itemile->getName() == "hairpin") {
+							findit = true;
+							break;
+						}
 					}
-				}
-				if (!findit) {
-					/*auto pop = PopScene::createScene();
-					pop->setName("pop");
-					int *a = new int;
-					*a = 5;
-					pop->setUserData(a);
-					m_UI_Dialog->addChild(pop);*/
-					Sprite* hairpin = Sprite::create("player.png", CCRectMake(2069, 926, 155, 155));
-					hairpin->setName("hairpin");
-					hairpin->setPosition(Vec2(2734, 3947));
-					m_UI_Game->addChild(hairpin);
-					itemsVectorInMap.pushBack(hairpin);
+					if (!findit) {
+						/*auto pop = PopScene::createScene();
+						pop->setName("pop");
+						int *a = new int;
+						*a = 5;
+						pop->setUserData(a);
+						m_UI_Dialog->addChild(pop);*/
+						Sprite* hairpin = Sprite::create("player.png", CCRectMake(2069, 926, 155, 155));
+						hairpin->setName("hairpin");
+						hairpin->setPosition(Vec2(2734, 3947));
+						m_UI_Game->addChild(hairpin);
+						itemsVectorInMap.pushBack(hairpin);
+					}
+					object->setState(-1);
+					auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
+						canmove = true;
+					});
+					canmove = false;
+					auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
+					GifAnimationDef* def = new GifAnimationDef;
+					def->loops = 1;						// 循环次数
+					def->filePath = "g1.gif";				// 文件路径
+					def->delayPerUnit = 0.1;			// 每帧间隔
+					def->restoreOriginalFrame = false;	// 还原初始状态
+														// 创建动画
+					auto princessThrow = GifAnimation::getInstance()->createAnimation(*def);
+					Animate* aprincessThrow = Animate::create(princessThrow);
+					auto action = Sequence::create(aprincessThrow, actionMoveDone, NULL);
+					princess->runAction(action);
 				}
 			}
 			if (projectile->getName() == "Event005") {
@@ -441,6 +470,20 @@ void HelloWorld::conTact(float delta) {
 				if (object->getState() == 1) {
 					object->setState(-1);
 					rootNode->getChildByName("Object")->removeChildByName("Object011");
+					Sprite* mom = Sprite::create("mom.png");
+					mom->setName("mom");
+					auto zone009 = rootNode->getChildByName("Zone")->getChildByName("Zone009");
+					m_UI_Game->addChild(mom);
+					setPlayerPositionByZone(mom, zone009);
+				}
+			}
+			if (projectile->getName() == "Event010") {
+				auto object = (Construct*)projectile->getUserData();
+				if (object->getState() == 1) {
+					object->setState(-1);
+					auto zone011 = rootNode->getChildByName("Zone")->getChildByName("Zone011");
+					auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
+					setPlayerPositionByZone(princess, zone011);
 				}
 			}
 		}
@@ -465,7 +508,9 @@ void HelloWorld::playerMove(float delta) {
 	if (!jumping&&!onStair) {
 		drop();
 	}
-	playerWalk();
+	if (canmove) {
+		playerWalk();
+	}
 	fixPosition();
 }
 void HelloWorld::playerWalk() {
@@ -559,7 +604,7 @@ void HelloWorld::drop() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_front_x = player->getPosition().x;
 	auto a = player->getContentSize();
-	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height/4);
+	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height/2);
 	unsigned int image_after_x = image_front_x + 40;
 	unsigned int image_after_y = image_front_y;
 	ccColor4B c_front = getPixelColorByPoint(Point(image_front_x, image_front_y));
@@ -583,7 +628,7 @@ void HelloWorld::fixPosition() {
 		Point playerPosition = player->getPosition();
 		unsigned int image_x = player->getPosition().x;
 		unsigned int image_y = background->getContentSize().height -
-			(player->getPosition().y - player->getContentSize().height / 4);
+			(player->getPosition().y - player->getContentSize().height / 2);
 		ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (leftBottom.a == 255&&leftBottom.g < 100) {
@@ -600,7 +645,7 @@ void HelloWorld::fixPosition() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x;
 	unsigned int image_y = background->getContentSize().height -
-		(player->getPosition().y - player->getContentSize().height / 4);
+		(player->getPosition().y - player->getContentSize().height / 2);
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	leftBottom = getPixelColorByPoint(Point(image_x, image_y+20));
 }
@@ -608,7 +653,7 @@ int HelloWorld::wallBesideLeft() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x-10;
 	unsigned int image_y = background->getContentSize().height -
-		(player->getPosition().y - player->getContentSize().height / 4) - 10;
+		(player->getPosition().y - player->getContentSize().height / 2) - 10;
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	image_y -= 20;
 	ccColor4B leftTop = getPixelColorByPoint(Point(image_x, image_y));
@@ -627,7 +672,7 @@ int HelloWorld::wallBesideRight() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x + 10;
 	unsigned int image_y = background->getContentSize().height -
-		(player->getPosition().y - player->getContentSize().height / 4) - 10;
+		(player->getPosition().y - player->getContentSize().height / 2) - 10;
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	image_y -= 20;
 	ccColor4B leftTop = getPixelColorByPoint(Point(image_x, image_y));
@@ -671,3 +716,8 @@ void HelloWorld::addNewItem(string itemName, Point pos, int a, int b, int c, int
 	}
 }
 //move finish
+void HelloWorld::setPlayerPositionByZone(Sprite* player, Node* zone) {
+	Point pos = zone->getPosition();
+	pos.y = pos.y - zone->getContentSize().height / 2 + player->getContentSize().height / 2;
+	player->setPosition(pos);
+}
