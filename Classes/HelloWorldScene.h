@@ -26,6 +26,7 @@ public:
 	void configEventListener();
 	bool initLayer();
 	void initDialog();
+	void initAnimate();
 	virtual void onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
 	virtual void onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
 	void setPhyWorld(PhysicsWorld* world) { m_world = world; }
@@ -35,6 +36,7 @@ public:
 	int wallBesideLeft();
 	void playerMove(float delta);
 	void conTact(float delta);
+	void playerAction();
 	void canMove(float delta);
 	void changeLocation(float delta);
 	void addNewItem(string itemName, Point ItemPos, int a, int b, int c, int d);
@@ -65,6 +67,9 @@ private:
 
 	Animation* pStand;
 	Animation* pWalk;
+	Animation* ptemp;
+	Animation *princessStand;
+	Animation *princessTemp;
 	ccColor4B stairBlue;
 	Vector<Node*> contactVector;
 	Vector<Node*> eventVector;

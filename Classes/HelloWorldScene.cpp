@@ -42,7 +42,7 @@ void HelloWorld::setGame() {
 	//player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
 
 	GifAnimationDef* def = new GifAnimationDef;
-	def->loops = 1;						// 循环次数
+	def->loops = -1;						// 循环次数
 	def->filePath = "g1.gif";				// 文件路径
 	def->delayPerUnit = 1.0/60.0;			// 每帧间隔
 	def->restoreOriginalFrame = false;	// 还原初始状态
@@ -60,7 +60,7 @@ void HelloWorld::setGame() {
 	pWalk = GifAnimation::getInstance()->createAnimation(*def_);
 
 	// 创建精灵播放动画
-	player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
+	player = Sprite::create("walk1.png");
 	player->setAnchorPoint(Vec2(0.3125, 0.5));
 	Animate* aStand = Animate::create(pStand);
 	aStand->setTag(20);
@@ -224,6 +224,7 @@ bool HelloWorld::init()
 	configPhy();
 	configSchedule();
 	configEventListener();
+	initAnimate();
 	//background follow
 	auto follow = Follow::create(player);
 	this->runAction(follow);
@@ -296,6 +297,14 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
 
 								princess->runAction(MoveTo::create(5.0, Point(posZone4->getPosition().x, princess->getPosition().y)));
+
+								playerAction();
+							}
+						}
+						else {
+							auto object = (Construct*)projectile->getUserData();
+							if (object->getState() != -1) {
+								playerAction();
 							}
 						}
 					}
@@ -315,12 +324,16 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						}
 					}
 					if (projectile->getName() == "Object012") {
-						if (player->getChildByName("umbrella") != NULL) {
-							auto object = (Construct*)projectile->getUserData();
-							if (object->getState() != -1) {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							if (player->getChildByName("umbrella") != NULL) {
 								object->setState(-1);
 								//play
 								rootNode->getChildByName("Door")->removeChildByName("Door00a");
+								playerAction();
+							}
+							else {
+								playerAction();
 							}
 						}
 					}
@@ -335,8 +348,14 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					if (projectile->getName() == "Object015") {
 						auto object = (Construct*)projectile->getUserData();
 						if (object->getState() != -1) {
-							object->setState(-1);
-							rootNode->getChildByName("Door")->removeChildByName("Door002");
+							if (player->getChildByName("bucket") != NULL) {
+								object->setState(-1);
+								rootNode->getChildByName("Door")->removeChildByName("Door002");
+								playerAction();
+							}
+							else {
+								playerAction();
+							}
 						}
 					}
 					if (projectile->getName() == "Object018") {
@@ -347,9 +366,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						}
 					}
 					if (projectile->getName() == "Object020") {
-						if (player->getChildByName("roomKey") != NULL) {
-							auto object = (Construct*)projectile->getUserData();
-							if (object->getState() != -1) {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							if (player->getChildByName("roomKey") != NULL) {
 								object->setState(-1);
 								//play
 								rootNode->getChildByName("Door")->removeChildByName("Door004");
@@ -358,8 +377,13 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
 								m_UI_Game->addChild(dad);
 								setPlayerPositionByZone(dad, zone006);
+
+								playerAction();
 							}
-						}
+							else {
+								playerAction();
+							}
+						} 
 					}
 					if (projectile->getName() == "Object022") {
 						auto object = (Construct*)projectile->getUserData();
@@ -375,6 +399,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								if (player->getChildByName("oilbucket") != NULL) {
 									object->setState(1);
 									//play
+									playerAction();
+								}
+								else {
+									playerAction();
 								}
 							}
 							else if (object->getState() == 1) {
@@ -388,6 +416,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 									auto dad = (Sprite*)m_UI_Game->getChildByName("dad");
 
 									dad->runAction(MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y)));
+									playerAction();
+								}
+								else {
+									playerAction();
 								}
 							}
 						}
@@ -400,6 +432,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							Sprite *event010 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event010");
 							auto eventobject = (Construct*)event010->getUserData();
 							eventobject->setState(1);
+							playerAction();
 						}
 					}
 				}
@@ -447,24 +480,25 @@ void HelloWorld::conTact(float delta) {
 					object->setState(-1);
 					auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
 						canmove = true;
+						auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
+						princess->stopActionByTag(66);
+						Animate* aprincessWalk = Animate::create(princessStand);
+						aprincessWalk->setTag(88);
+						princess->runAction(aprincessWalk);
 					});
 					canmove = false;
 					auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
-					GifAnimationDef* def = new GifAnimationDef;
-					def->loops = 1;						// 循环次数
-					def->filePath = "g1.gif";				// 文件路径
-					def->delayPerUnit = 0.1;			// 每帧间隔
-					def->restoreOriginalFrame = false;	// 还原初始状态
-														// 创建动画
-					auto princessThrow = GifAnimation::getInstance()->createAnimation(*def);
-					Animate* aprincessThrow = Animate::create(princessThrow);
+					Animate* aprincessThrow = Animate::create(princessTemp);
 					auto action = Sequence::create(aprincessThrow, actionMoveDone, NULL);
+					action->setTag(66);
 					princess->runAction(action);
 				}
 			}
+
 			if (projectile->getName() == "Event005") {
 				rootNode->getChildByName("Door")->removeChildByName("Door003");
 			}
+
 			if (projectile->getName() == "Event008") {
 				auto object = (Construct*)projectile->getUserData();
 				if (object->getState() == 1) {
@@ -508,13 +542,11 @@ void HelloWorld::playerMove(float delta) {
 	if (!jumping&&!onStair) {
 		drop();
 	}
-	if (canmove) {
-		playerWalk();
-	}
+	playerWalk();
 	fixPosition();
 }
 void HelloWorld::playerWalk() {
-	if (left == true) {
+	if (left == true&&canmove) {
 		Location = false;
 		if (playerState == 0) {
 			player->stopActionByTag(20);
@@ -533,7 +565,7 @@ void HelloWorld::playerWalk() {
 		}
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 	}
-	else if (right == true) {
+	else if (right == true&&canmove) {
 		Location = true;
 		if (playerState == 0) {
 			player->stopActionByTag(20);
@@ -552,7 +584,7 @@ void HelloWorld::playerWalk() {
 		}
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 	}
-	if (right == left) {
+	if (right == left && canmove) {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		speed.x = 0;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
@@ -589,6 +621,9 @@ void HelloWorld::playerWalk() {
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 	}
+	if (!canmove) {
+		player->getPhysicsBody()->setVelocity(Vec2(0, 0));
+	}
 }
 void HelloWorld::update(float dt)
 {
@@ -609,7 +644,7 @@ void HelloWorld::drop() {
 	unsigned int image_after_y = image_front_y;
 	ccColor4B c_front = getPixelColorByPoint(Point(image_front_x, image_front_y));
 	ccColor4B c_after = getPixelColorByPoint(Point(image_after_x, image_after_y));
-	if (c_front.a == 0 && c_after.a == 0) {
+	if (c_front.a == 0&&c_after.a == 0) {
 		if (player->getPhysicsBody()->getVelocity().y == 0) {
 			player->getPhysicsBody()->setVelocity(player->getPhysicsBody()->getVelocity() + Vec2(0, -300));
 		}
@@ -720,4 +755,54 @@ void HelloWorld::setPlayerPositionByZone(Sprite* player, Node* zone) {
 	Point pos = zone->getPosition();
 	pos.y = pos.y - zone->getContentSize().height / 2 + player->getContentSize().height / 2;
 	player->setPosition(pos);
+}
+
+void HelloWorld::initAnimate() {
+	GifAnimationDef* def = new GifAnimationDef;
+	def->loops = 1;						// 循环次数
+	def->filePath = "playertemp.gif";				// 文件路径
+	def->delayPerUnit = 1.0;			// 每帧间隔
+	def->restoreOriginalFrame = false;	// 还原初始状态
+
+										// 创建动画
+	ptemp = GifAnimation::getInstance()->createAnimation(*def);
+
+
+
+	GifAnimationDef* def_ = new GifAnimationDef;
+	def_->loops = -1;						// 循环次数
+	def_->filePath = "pricness.gif";				// 文件路径
+	def_->delayPerUnit = 1.0;			// 每帧间隔
+	def_->restoreOriginalFrame = false;	// 还原初始状态
+
+										// 创建动画
+	princessStand = GifAnimation::getInstance()->createAnimation(*def_);
+
+	GifAnimationDef* _def = new GifAnimationDef;
+	_def->loops = 1;						// 循环次数
+	_def->filePath = "temp.gif";				// 文件路径
+	_def->delayPerUnit = 1.0;			// 每帧间隔
+	_def->restoreOriginalFrame = false;	// 还原初始状态
+
+										// 创建动画
+	princessTemp = GifAnimation::getInstance()->createAnimation(*_def);
+
+	
+}
+void HelloWorld::playerAction() {
+	auto actionDone = CallFuncN::create([&](Ref* sender) {
+		canmove = true;
+		player->stopActionByTag(66);
+		Animate* aStand = Animate::create(pStand);
+		aStand->setTag(20);
+		player->runAction(aStand);
+		playerState = 0;
+	});
+	canmove = false;
+	Animate* playerTempAction = Animate::create(ptemp);
+	player->stopActionByTag(20);
+	player->stopActionByTag(30);
+	auto action = Sequence::create(playerTempAction, actionDone, NULL);
+	action->setTag(66);
+	player->runAction(action);
 }
