@@ -110,9 +110,12 @@ void HelloWorld::configPhy() {
 	//init door
 	for (int i = 0; i < doorsVector.size();i++) {
 		Sprite *projectile = (CCSprite *)doorsVector.at(i);
+		projectile->setVisible(false);
 		auto doorBody = PhysicsBody::createBox(projectile->getContentSize());
 		doorBody->setDynamic(true);
 		doorBody->setGravityEnable(false);
+		doorBody->setRotationEnable(false);
+		doorBody->setDynamic(false);
 		projectile->setPhysicsBody(doorBody);
 	}
 
@@ -211,6 +214,7 @@ bool HelloWorld::init()
 		return false;
 	}
 	playerState = 0;
+	dropspeed = 0;
 	droping = false;
 	jumping = false;
 	onStair = false;
@@ -254,17 +258,19 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			right = true;
 		}
 		if (keyCode == EventKeyboard::KeyCode::KEY_W) {
-			auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
-				jumping = false;
-			});
-			if (!jumping&&!droping&&!onStair) {
-				jumping = true;
-				auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
-				auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
-				player->runAction(action);
-			}
-			if (onStair) {
-				up = true;
+			if (canmove) {
+				auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
+					jumping = false;
+				});
+				if (!jumping&&!droping&&!onStair) {
+					jumping = true;
+					auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
+					auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
+					player->runAction(action);
+				}
+				if (onStair) {
+					up = true;
+				}
 			}
 		}
 		if (keyCode == EventKeyboard::KeyCode::KEY_S) {
@@ -534,16 +540,19 @@ void HelloWorld::conTact(float delta) {
 		Sprite *projectile = (CCSprite *)StandBysVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
 			standBy = true;
+			droping = false;
 		}
 	}
 }
 void HelloWorld::playerMove(float delta) {
 	//drop when it is not on the floor
-	if (!jumping&&!onStair) {
+	if (!jumping&&!onStair&&!standBy) {
 		drop();
 	}
 	playerWalk();
-	fixPosition();
+	if (!standBy) {
+		fixPosition();
+	}
 }
 void HelloWorld::playerWalk() {
 	if (left == true&&canmove) {
@@ -609,7 +618,7 @@ void HelloWorld::playerWalk() {
 			speed.y = -200;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
-		if (up == down) {
+		if (up == down&&!standBy) {
 			player->getPhysicsBody()->setVelocity(Vec2(0, 0));
 		}
 	}
@@ -620,9 +629,16 @@ void HelloWorld::playerWalk() {
 			speed.y = -200;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
+		else if (up != true) {
+			Vec2 speed = player->getPhysicsBody()->getVelocity();
+			speed.y = 0;
+			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		}
 	}
 	if (!canmove) {
-		player->getPhysicsBody()->setVelocity(Vec2(0, 0));
+		Vec2 speed = player->getPhysicsBody()->getVelocity();
+		speed.x = 0;
+		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 	}
 }
 void HelloWorld::update(float dt)
@@ -646,9 +662,10 @@ void HelloWorld::drop() {
 	ccColor4B c_after = getPixelColorByPoint(Point(image_after_x, image_after_y));
 	if (c_front.a == 0&&c_after.a == 0) {
 		if (player->getPhysicsBody()->getVelocity().y == 0) {
-			player->getPhysicsBody()->setVelocity(player->getPhysicsBody()->getVelocity() + Vec2(0, -300));
+			player->getPhysicsBody()->setVelocity(player->getPhysicsBody()->getVelocity() + Vec2(0, -250));
 		}
 		droping = true;
+		dropspeed += 10;
 	}
 	else {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
@@ -692,8 +709,8 @@ int HelloWorld::wallBesideLeft() {
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	image_y -= 20;
 	ccColor4B leftTop = getPixelColorByPoint(Point(image_x, image_y));
-	if (leftBottom.a == 255) {
-		if (leftTop.a == 255) {
+	if (leftBottom.a >= 225) {
+		if (leftTop.a >= 225) {
 			return 1;
 		}
 		else {

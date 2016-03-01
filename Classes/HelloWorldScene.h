@@ -64,7 +64,7 @@ private:
 	bool standBy;
 	bool Location;
 	int playerState;
-
+	double dropspeed;
 	Animation* pStand;
 	Animation* pWalk;
 	Animation* ptemp;
