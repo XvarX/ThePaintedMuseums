@@ -41,29 +41,11 @@ void HelloWorld::setGame() {
 	//player set
 	//player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
 
-	GifAnimationDef* def = new GifAnimationDef;
-	def->loops = -1;						// 循环次数
-	def->filePath = "g1.gif";				// 文件路径
-	def->delayPerUnit = 1.0/60.0;			// 每帧间隔
-	def->restoreOriginalFrame = false;	// 还原初始状态
-
-	// 创建动画
-	pStand = GifAnimation::getInstance()->createAnimation(*def);
-
-	GifAnimationDef* def_ = new GifAnimationDef;
-	def_->loops = -1;						// 循环次数
-	def_->filePath = "g2.gif";				// 文件路径
-	def_->delayPerUnit = 1.0 / 60.0;			// 每帧间隔
-	def_->restoreOriginalFrame = false;	// 还原初始状态
-
-										// 创建动画
-	pWalk = GifAnimation::getInstance()->createAnimation(*def_);
-
 	// 创建精灵播放动画
 	player = Sprite::create("walk1.png");
 	player->setAnchorPoint(Vec2(0.3125, 0.5));
 	Animate* aStand = Animate::create(pStand);
-	aStand->setTag(20);
+	aStand->setTag(0);
 	player->runAction(aStand);
 	player->runAction(FlipX::create(true));
 	//player->setScale(0.5);
@@ -96,6 +78,9 @@ void HelloWorld::setGame() {
 	auto StandBy = rootNode->getChildByName("StandBy");
 	StandBysVector = StandBy->getChildren();
 
+	auto Xiepo = rootNode->getChildByName("Xiepo");
+	XieposVector = Xiepo->getChildren();
+
 	//init position
 	auto zone001 = rootNode->getChildByName("Zone")->getChildByName("Zone001");
 	auto zone002 = rootNode->getChildByName("Zone")->getChildByName("Zone002");
@@ -119,6 +104,7 @@ void HelloWorld::configPhy() {
 		projectile->setPhysicsBody(doorBody);
 	}
 
+
 	//physics edge init
 	auto body = PhysicsBody::createEdgeBox(background->getContentSize(), PHYSICSBODY_MATERIAL_DEFAULT, 3);
 	auto edgeNode = Node::create();
@@ -129,7 +115,7 @@ void HelloWorld::configPhy() {
 
 	//physics player init
 	PhysicsMaterial material;
-	auto playerBody = PhysicsBody::createBox(Size(135, player->getContentSize().height), PhysicsMaterial::PhysicsMaterial(0, 0, 0));
+	auto playerBody = PhysicsBody::createBox(player->getContentSize());
 	playerBody->setRotationEnable(false);
 	playerBody->setGravityEnable(false);
 	player->setPhysicsBody(playerBody);
@@ -219,16 +205,19 @@ bool HelloWorld::init()
 	jumping = false;
 	onStair = false;
 	standBy = false;
+	onxiepo = false;
 	canmove = true;
 	Location = false;
+	playingAction = false;
 	rootNode = CSLoader::createNode("MainScene.csb");
 	initLayer();
+	initAnimate();
 	setScene();
 	setGame();
 	configPhy();
 	configSchedule();
 	configEventListener();
-	initAnimate();
+
 	//background follow
 	auto follow = Follow::create(player);
 	this->runAction(follow);
@@ -261,12 +250,18 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			if (canmove) {
 				auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
 					jumping = false;
+					stopAnimate();
 				});
 				if (!jumping&&!droping&&!onStair) {
 					jumping = true;
 					auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
 					auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
 					player->runAction(action);
+					Animate* ajump = Animate::create(pjump);
+					stopAnimate();
+					ajump->setTag(5);
+					player->runAction(ajump);
+					playerState = 5;
 				}
 				if (onStair) {
 					up = true;
@@ -543,6 +538,13 @@ void HelloWorld::conTact(float delta) {
 			droping = false;
 		}
 	}
+	onxiepo = false;
+	for (int i = 0; i < XieposVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)XieposVector.at(i);
+		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+			onxiepo = true;
+		}
+	}
 }
 void HelloWorld::playerMove(float delta) {
 	//drop when it is not on the floor
@@ -557,12 +559,21 @@ void HelloWorld::playerMove(float delta) {
 void HelloWorld::playerWalk() {
 	if (left == true&&canmove) {
 		Location = false;
-		if (playerState == 0) {
-			player->stopActionByTag(20);
+		if ((playerState == 0 || playerState == -1 || playerState == 3 ||playerState == 4)&&!onxiepo) {
+			stopAnimate();
 			Animate* aWalk = Animate::create(pWalk);
-			aWalk->setTag(30);
+			aWalk->setTag(1);
 			player->runAction(aWalk);
 			playerState = 1;
+		}
+		if (onxiepo) {
+			if (playerState == 0 || playerState == -1 || playerState == 1||playerState == 3) {
+				stopAnimate();
+				Animate* aupStair = Animate::create(pupStair);
+				aupStair->setTag(4);
+				player->runAction(aupStair);
+				playerState = 4;
+			}
 		}
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (speed.x >= 0) {
@@ -576,12 +587,21 @@ void HelloWorld::playerWalk() {
 	}
 	else if (right == true&&canmove) {
 		Location = true;
-		if (playerState == 0) {
-			player->stopActionByTag(20);
+		if ((playerState == 0 || playerState == -1 || playerState == 4 || playerState == 3) && !onxiepo) {
+			stopAnimate();
 			Animate* aWalk = Animate::create(pWalk);
-			aWalk->setTag(30);
+			aWalk->setTag(1);
 			player->runAction(aWalk);
 			playerState = 1;
+		}
+		if (onxiepo) {
+			if (playerState == 0 || playerState == -1 || playerState == 1|| playerState == 4) {
+				stopAnimate();
+				Animate* adownStair = Animate::create(pdownStair);
+				adownStair->setTag(3);
+				player->runAction(adownStair);
+				playerState = 3;
+			}
 		}
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (speed.x <= 0) {
@@ -597,10 +617,10 @@ void HelloWorld::playerWalk() {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		speed.x = 0;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
-		if (playerState == 1) {
-			player->stopActionByTag(30);
+		if (playerState == 1|| playerState == -1 ||playerState == 3||playerState == 4) {
+			stopAnimate();
 			Animate* aStand = Animate::create(pStand);
-			aStand->setTag(20);
+			aStand->setTag(0);
 			player->runAction(aStand);
 			playerState = 0;
 		}
@@ -643,9 +663,9 @@ void HelloWorld::playerWalk() {
 }
 void HelloWorld::update(float dt)
 {
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < 6; ++i)
 	{
-		m_world->step(1 / 180.0f);
+		m_world->step(1 / 360.0f);
 	}
 }
 void HelloWorld::changeLocation(float dt) {
@@ -655,28 +675,49 @@ void HelloWorld::drop() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_front_x = player->getPosition().x;
 	auto a = player->getContentSize();
-	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height/2);
+	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height/2)+5;
 	unsigned int image_after_x = image_front_x + 40;
 	unsigned int image_after_y = image_front_y;
 	ccColor4B c_front = getPixelColorByPoint(Point(image_front_x, image_front_y));
 	ccColor4B c_after = getPixelColorByPoint(Point(image_after_x, image_after_y));
 	if (c_front.a == 0&&c_after.a == 0) {
-		if (player->getPhysicsBody()->getVelocity().y == 0) {
-			player->getPhysicsBody()->setVelocity(player->getPhysicsBody()->getVelocity() + Vec2(0, -250));
-		}
 		droping = true;
-		dropspeed += 10;
+		Vec2 speed = player->getPhysicsBody()->getVelocity();
+		speed.y = -250;
+		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		if (playerState != 6&&!onxiepo) {
+			Animate* afall = Animate::create(pfall);
+			stopAnimate();
+			afall->setTag(6);
+			player->runAction(afall);
+			playerState = 6;
+		}
 	}
 	else {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		speed.y = 0;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
-		droping = false;
+		if (droping == true) {
+			droping = false;
+			auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
+				stopAnimate();
+				playerState = -1;
+				playingAction = false;
+			});
+			if (playerState != 7&&!onxiepo) {
+				Animate* arecovery = Animate::create(precovery);
+				auto action = Sequence::create(arecovery, actionMoveDone, NULL);
+				action->setTag(7);
+				player->runAction(action);
+				playingAction = true;
+				playerState = 7;
+			}
+		}
 	}
 }
 //To fix position when player is in floor or wall
 void HelloWorld::fixPosition() {
-	if (!onStair) {
+	if (!onStair&&!jumping&&!droping) {
 		Point playerPosition = player->getPosition();
 		unsigned int image_x = player->getPosition().x;
 		unsigned int image_y = background->getContentSize().height -
@@ -686,12 +727,6 @@ void HelloWorld::fixPosition() {
 		if (leftBottom.a == 255&&leftBottom.g < 100) {
 			speed.y = 200;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
-		}
-		else if (leftBottom.g < 100){
-			if (speed.y > 0) {
-				speed.y = 0;
-				player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
-			}
 		}
 	}
 	Point playerPosition = player->getPosition();
@@ -775,51 +810,48 @@ void HelloWorld::setPlayerPositionByZone(Sprite* player, Node* zone) {
 }
 
 void HelloWorld::initAnimate() {
-	GifAnimationDef* def = new GifAnimationDef;
-	def->loops = 1;						// 循环次数
-	def->filePath = "playertemp.gif";				// 文件路径
-	def->delayPerUnit = 1.0;			// 每帧间隔
-	def->restoreOriginalFrame = false;	// 还原初始状态
-
-										// 创建动画
-	ptemp = GifAnimation::getInstance()->createAnimation(*def);
-
-
-
-	GifAnimationDef* def_ = new GifAnimationDef;
-	def_->loops = -1;						// 循环次数
-	def_->filePath = "pricness.gif";				// 文件路径
-	def_->delayPerUnit = 1.0;			// 每帧间隔
-	def_->restoreOriginalFrame = false;	// 还原初始状态
-
-										// 创建动画
-	princessStand = GifAnimation::getInstance()->createAnimation(*def_);
-
-	GifAnimationDef* _def = new GifAnimationDef;
-	_def->loops = 1;						// 循环次数
-	_def->filePath = "temp.gif";				// 文件路径
-	_def->delayPerUnit = 1.0;			// 每帧间隔
-	_def->restoreOriginalFrame = false;	// 还原初始状态
-
-										// 创建动画
-	princessTemp = GifAnimation::getInstance()->createAnimation(*_def);
-
-	
+	ptemp = loadAnimate("playertemp.gif", 1, false);
+	princessStand = loadAnimate("pricness.gif", -1, false);
+	princessTemp = loadAnimate("temp.gif", 1, false);
+	pStand = loadAnimate("gif//000-stand.gif", -1, false);
+	pWalk = loadAnimate("gif//001-walk.gif", -1, false);
+	pjump = loadAnimate("gif//005-jump.gif", 1, false);
+	pfall = loadAnimate("gif//006-fall.gif", 1, false);
+	precovery = loadAnimate("gif//007-recover.gif", 1, false);
+	pdownStair = loadAnimate("gif//003-down-stair.gif", -1, false);
+	pupStair = loadAnimate("gif//004-up-stair.gif", -1, false);
+	//fall
 }
 void HelloWorld::playerAction() {
 	auto actionDone = CallFuncN::create([&](Ref* sender) {
 		canmove = true;
-		player->stopActionByTag(66);
+		stopAnimate();
 		Animate* aStand = Animate::create(pStand);
-		aStand->setTag(20);
+		aStand->setTag(0);
 		player->runAction(aStand);
 		playerState = 0;
 	});
 	canmove = false;
 	Animate* playerTempAction = Animate::create(ptemp);
-	player->stopActionByTag(20);
-	player->stopActionByTag(30);
+	stopAnimate();
 	auto action = Sequence::create(playerTempAction, actionDone, NULL);
 	action->setTag(66);
 	player->runAction(action);
+}
+
+Animation* HelloWorld::loadAnimate(string path, int times, bool back) {
+	GifAnimationDef* def = new GifAnimationDef;
+	def->loops = times;						// 循环次数
+	def->filePath = path;				// 文件路径
+	def->delayPerUnit = 1.0/30;			// 每帧间隔
+	def->restoreOriginalFrame = back;	// 还原初始状态
+
+										// 创建动画
+	auto result = GifAnimation::getInstance()->createAnimation(*def);
+	return result;
+}
+void HelloWorld::stopAnimate() {
+	for (int i = 0; i <= 15; i++) {
+		player->stopActionByTag(i);
+	}
 }

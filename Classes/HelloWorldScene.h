@@ -26,7 +26,9 @@ public:
 	void configEventListener();
 	bool initLayer();
 	void initDialog();
+	void stopAnimate();
 	void initAnimate();
+	Animation* loadAnimate(string path, int times, bool back);
 	virtual void onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
 	virtual void onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
 	void setPhyWorld(PhysicsWorld* world) { m_world = world; }
@@ -61,13 +63,20 @@ private:
 	bool jumping;
 	bool canmove;
 	bool onStair;
+	bool onxiepo;
 	bool standBy;
 	bool Location;
+	bool playingAction;
 	int playerState;
 	double dropspeed;
 	Animation* pStand;
 	Animation* pWalk;
+	Animation* pjump;
 	Animation* ptemp;
+	Animation* pfall;
+	Animation* precovery;
+	Animation* pdownStair;
+	Animation* pupStair;
 	Animation *princessStand;
 	Animation *princessTemp;
 	ccColor4B stairBlue;
@@ -79,6 +88,7 @@ private:
 	Vector<Node*> stairsVector;
 	Vector<Node*> objectsVector;
 	Vector<Node*> StandBysVector;
+	Vector<Node*> XieposVector;
 
 	Layer* m_UI_Dialog;			//对话框层 最高层
 	Layer* m_UI_Tool;			//工具栏层 次高层
