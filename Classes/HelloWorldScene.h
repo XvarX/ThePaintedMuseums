@@ -27,6 +27,7 @@ public:
 	bool initLayer();
 	void initDialog();
 	void stopAnimate();
+	void playerAction(Animation* action,int i);
 	void initAnimate();
 	Animation* loadAnimate(string path, int times, bool back);
 	virtual void onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
@@ -66,6 +67,7 @@ private:
 	bool onxiepo;
 	bool standBy;
 	bool Location;
+	float rotation;
 	bool playingAction;
 	int playerState;
 	double dropspeed;
@@ -79,6 +81,9 @@ private:
 	Animation* pupStair;
 	Animation *princessStand;
 	Animation *princessTemp;
+	Animation* popenWindow;
+	Animation* patticopen;
+	Animation* pnoidea;
 	ccColor4B stairBlue;
 	Vector<Node*> contactVector;
 	Vector<Node*> eventVector;

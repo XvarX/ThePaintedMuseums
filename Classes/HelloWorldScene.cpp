@@ -3,7 +3,9 @@
 #include "ui/CocosGUI.h"
 #include "GifAnimation.h"
 #include "popScence.h"
+#include "math\CCMath.h"
 #include "Construct.h"
+#include <math.h>
 #include "HelloWorlD.h"
 
 USING_NS_CC;
@@ -42,8 +44,8 @@ void HelloWorld::setGame() {
 	//player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
 
 	// 创建精灵播放动画
-	player = Sprite::create("walk1.png");
-	player->setAnchorPoint(Vec2(0.3125, 0.5));
+	player = Sprite::create("player1.png");
+	player->setAnchorPoint(Vec2(0.514, 0.5));
 	Animate* aStand = Animate::create(pStand);
 	aStand->setTag(0);
 	player->runAction(aStand);
@@ -69,10 +71,20 @@ void HelloWorld::setGame() {
 	auto Object = rootNode->getChildByName("Object");
 	objectsVector = Object->getChildren();
 	auto Stair = rootNode->getChildByName("Stair");
+	
 	stairsVector = Stair->getChildren();
 	for (int i = 0; i < objectsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)objectsVector.at(i);
 		Construct *newObject = new Construct(projectile->getName(), i);
+		projectile->setUserData(newObject);
+	}
+
+	for (int i = 0; i < stairsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)stairsVector.at(i);
+		Construct *newObject = new Construct(projectile->getName(), i);
+		if (projectile->getName() == "Stair02") {
+			newObject->setState(-1);
+		}
 		projectile->setUserData(newObject);
 	}
 	auto StandBy = rootNode->getChildByName("StandBy");
@@ -86,6 +98,7 @@ void HelloWorld::setGame() {
 	auto zone002 = rootNode->getChildByName("Zone")->getChildByName("Zone002");
 	setPlayerPositionByZone(player, zone001);
 	setPlayerPositionByZone(princess, zone002);
+	player->setPosition(Vec2(5000, 2000));
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
@@ -115,7 +128,8 @@ void HelloWorld::configPhy() {
 
 	//physics player init
 	PhysicsMaterial material;
-	auto playerBody = PhysicsBody::createBox(player->getContentSize());
+	auto playerBody = PhysicsBody::createBox(Size(158,330));
+	
 	playerBody->setRotationEnable(false);
 	playerBody->setGravityEnable(false);
 	player->setPhysicsBody(playerBody);
@@ -199,6 +213,7 @@ bool HelloWorld::init()
 	{
 		return false;
 	}
+	rotation = 0;
 	playerState = 0;
 	dropspeed = 0;
 	droping = false;
@@ -299,13 +314,13 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 
 								princess->runAction(MoveTo::create(5.0, Point(posZone4->getPosition().x, princess->getPosition().y)));
 
-								playerAction();
+								playerAction(popenWindow, 9);
 							}
 						}
 						else {
 							auto object = (Construct*)projectile->getUserData();
 							if (object->getState() != -1) {
-								playerAction();
+								playerAction(pnoidea, 8);
 							}
 						}
 					}
@@ -330,11 +345,13 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							if (player->getChildByName("umbrella") != NULL) {
 								object->setState(-1);
 								//play
-								rootNode->getChildByName("Door")->removeChildByName("Door00a");
-								playerAction();
+								Sprite *stair02 = (CCSprite *)rootNode->getChildByName("Stair")->getChildByName("Stair02");
+								auto eventobject = (Construct*)stair02->getUserData();
+								eventobject->setState(0);
+								playerAction(patticopen, 10);
 							}
 							else {
-								playerAction();
+								playerAction(pnoidea, 8);
 							}
 						}
 					}
@@ -527,7 +544,10 @@ void HelloWorld::conTact(float delta) {
 	for (int i = 0; i < stairsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)stairsVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-			onStair = true;
+			auto object = (Construct*)projectile->getUserData();
+			if (object->getState() == 0) {
+				onStair = true;
+			}
 		}
 	}
 	standBy = false;
@@ -539,10 +559,26 @@ void HelloWorld::conTact(float delta) {
 		}
 	}
 	onxiepo = false;
+	rotation = 0;
 	for (int i = 0; i < XieposVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)XieposVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-			onxiepo = true;
+			auto distancex = abs(player->getPosition().x - projectile->getPosition().x);
+			auto xiepohalflength = projectile->getContentSize().width*projectile->getScaleX() / 2 * cos(CC_DEGREES_TO_RADIANS(projectile->getRotation()));
+			auto xiepoheightbegin = projectile->getPosition().y - abs(projectile->getContentSize().width*projectile->getScaleX() / 2 * sin(CC_DEGREES_TO_RADIANS(projectile->getRotation())));
+			if (distancex < xiepohalflength){
+				auto sign = projectile->getRotation() > 0 ? 1 : -1;
+				auto xiepoX = projectile->getPosition().x + sign*xiepohalflength;
+				auto temp_x = xiepoX- player->getPosition().x;
+				auto temp_y = temp_x*tan(CC_DEGREES_TO_RADIANS(projectile->getRotation()));
+				
+				auto fix_y = temp_y + xiepoheightbegin;
+				auto footposition = player->getPosition().y - player->getContentSize().height / 2;
+				if (abs(player->getPosition().y - player->getContentSize().height / 2 - fix_y) < 120) {
+					onxiepo = true;
+					rotation = projectile->getRotation();
+				}
+			}
 		}
 	}
 }
@@ -567,22 +603,33 @@ void HelloWorld::playerWalk() {
 			playerState = 1;
 		}
 		if (onxiepo) {
-			if (playerState == 0 || playerState == -1 || playerState == 1||playerState == 3) {
-				stopAnimate();
-				Animate* aupStair = Animate::create(pupStair);
-				aupStair->setTag(4);
-				player->runAction(aupStair);
-				playerState = 4;
+			if (playerState == 0 || playerState == -1 || playerState == 1||playerState == 3|| playerState == 4) {
+				if (rotation > 0&&playerState != 4) {
+					stopAnimate();
+					Animate* aupStair = Animate::create(pupStair);
+					aupStair->setTag(4);
+					player->runAction(aupStair);
+					playerState = 4;
+				}
+				else if (rotation< 0&&playerState != 3){
+					stopAnimate();
+					Animate* adownStair = Animate::create(pdownStair);
+					adownStair->setTag(3);
+					player->runAction(adownStair);
+					playerState = 3; 
+				}
 			}
 		}
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (speed.x >= 0) {
-			speed.x = -200;
+			speed.x = -200*1.3;
+
 		}
 		int haha = wallBesideLeft();
 		if (haha == 1) {
 			speed.x = 0;
 		}
+
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 	}
 	else if (right == true&&canmove) {
@@ -595,17 +642,26 @@ void HelloWorld::playerWalk() {
 			playerState = 1;
 		}
 		if (onxiepo) {
-			if (playerState == 0 || playerState == -1 || playerState == 1|| playerState == 4) {
-				stopAnimate();
-				Animate* adownStair = Animate::create(pdownStair);
-				adownStair->setTag(3);
-				player->runAction(adownStair);
-				playerState = 3;
+			if (playerState == 0 || playerState == -1 || playerState == 1|| playerState == 4||playerState == 3) {
+				if (rotation > 0 && playerState != 3) {
+					stopAnimate();
+					Animate* adownStair = Animate::create(pdownStair);
+					adownStair->setTag(3);
+					player->runAction(adownStair);
+					playerState = 3;
+				}
+				else if (rotation < 0&&playerState != 4) {
+					stopAnimate();
+					Animate* aupStair = Animate::create(pupStair);
+					aupStair->setTag(4);
+					player->runAction(aupStair);
+					playerState = 4;
+				}
 			}
 		}
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (speed.x <= 0) {
-			speed.x = 200;
+			speed.x = 200*1.3;
 		}
 		int haha = wallBesideRight();
 		if (haha == 1) {
@@ -629,13 +685,13 @@ void HelloWorld::playerWalk() {
 		if (up == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			speed.x = 0;
-			speed.y = 200;
+			speed.y = 200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		if (down == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			speed.x = 0;
-			speed.y = -200;
+			speed.y = -200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		if (up == down&&!standBy) {
@@ -646,7 +702,7 @@ void HelloWorld::playerWalk() {
 		if (down == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			speed.x = 0;
-			speed.y = -200;
+			speed.y = -200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		else if (up != true) {
@@ -680,10 +736,10 @@ void HelloWorld::drop() {
 	unsigned int image_after_y = image_front_y;
 	ccColor4B c_front = getPixelColorByPoint(Point(image_front_x, image_front_y));
 	ccColor4B c_after = getPixelColorByPoint(Point(image_after_x, image_after_y));
-	if (c_front.a == 0&&c_after.a == 0) {
+	if (c_front.a == 0) {
 		droping = true;
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
-		speed.y = -250;
+		speed.y = -250*1.3;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		if (playerState != 6&&!onxiepo) {
 			Animate* afall = Animate::create(pfall);
@@ -704,7 +760,7 @@ void HelloWorld::drop() {
 				playerState = -1;
 				playingAction = false;
 			});
-			if (playerState != 7&&!onxiepo) {
+			if (playerState != 7&&(playerState == 6||playerState == 5)) {
 				Animate* arecovery = Animate::create(precovery);
 				auto action = Sequence::create(arecovery, actionMoveDone, NULL);
 				action->setTag(7);
@@ -725,8 +781,11 @@ void HelloWorld::fixPosition() {
 		ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (leftBottom.a == 255&&leftBottom.g < 100) {
-			speed.y = 200;
+			speed.y = 200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			if (playerState == 5) {
+				playerState = -1;
+			}
 		}
 	}
 	Point playerPosition = player->getPosition();
@@ -817,9 +876,12 @@ void HelloWorld::initAnimate() {
 	pWalk = loadAnimate("gif//001-walk.gif", -1, false);
 	pjump = loadAnimate("gif//005-jump.gif", 1, false);
 	pfall = loadAnimate("gif//006-fall.gif", 1, false);
-	precovery = loadAnimate("gif//007-recover.gif", 1, false);
+	precovery = loadAnimate("gif//007-recovery.gif", 1, false);
 	pdownStair = loadAnimate("gif//003-down-stair.gif", -1, false);
 	pupStair = loadAnimate("gif//004-up-stair.gif", -1, false);
+	popenWindow = loadAnimate("gif//009-window-open.gif", 1, false);
+	pnoidea = loadAnimate("gif//008-no-idea.gif", 1, false);
+	patticopen = loadAnimate("gif//010-attic-open.gif", 1, false);
 	//fall
 }
 void HelloWorld::playerAction() {
@@ -854,4 +916,17 @@ void HelloWorld::stopAnimate() {
 	for (int i = 0; i <= 15; i++) {
 		player->stopActionByTag(i);
 	}
+}
+void HelloWorld::playerAction(Animation* paction, int i) {
+	auto actionDone = CallFuncN::create([&](Ref* sender) {
+		canmove = true;
+		stopAnimate();
+		playerState = -1;
+	});
+	canmove = false;
+	Animate* playerTempAction = Animate::create(paction);
+	stopAnimate();
+	auto action = Sequence::create(playerTempAction, actionDone, NULL);
+	action->setTag(i);
+	player->runAction(action);
 }
