@@ -98,7 +98,7 @@ void HelloWorld::setGame() {
 	auto zone002 = rootNode->getChildByName("Zone")->getChildByName("Zone002");
 	setPlayerPositionByZone(player, zone001);
 	setPlayerPositionByZone(princess, zone002);
-	player->setPosition(Vec2(5000, 2000));
+	player->setPosition(Vec2(6600, 5900));
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
@@ -267,7 +267,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					jumping = false;
 					stopAnimate();
 				});
-				if (!jumping&&!droping&&!onStair) {
+				if (!jumping&&!droping&&(!onStair||standBy)) {
 					jumping = true;
 					auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
 					auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
@@ -369,10 +369,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							if (player->getChildByName("bucket") != NULL) {
 								object->setState(-1);
 								rootNode->getChildByName("Door")->removeChildByName("Door002");
-								playerAction();
+								playerAction(poutfire,11);
 							}
 							else {
-								playerAction();
+								playerAction(pnoidea, 8);
 							}
 						}
 					}
@@ -396,10 +396,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								m_UI_Game->addChild(dad);
 								setPlayerPositionByZone(dad, zone006);
 
-								playerAction();
+								playerAction(pdooropen, 12);
 							}
 							else {
-								playerAction();
+								playerAction(pnoidea, 8);
 							}
 						} 
 					}
@@ -417,10 +417,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								if (player->getChildByName("oilbucket") != NULL) {
 									object->setState(1);
 									//play
-									playerAction();
+									playerAction(poilthrow,13);
 								}
 								else {
-									playerAction();
+									playerAction(pnoidea, 8);
 								}
 							}
 							else if (object->getState() == 1) {
@@ -434,10 +434,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 									auto dad = (Sprite*)m_UI_Game->getChildByName("dad");
 
 									dad->runAction(MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y)));
-									playerAction();
+									playerAction(poilthrow, 14);
 								}
 								else {
-									playerAction();
+									playerAction(pnoidea, 8);
 								}
 							}
 						}
@@ -450,7 +450,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							Sprite *event010 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event010");
 							auto eventobject = (Construct*)event010->getUserData();
 							eventobject->setState(1);
-							playerAction();
+							playerAction(poilthrow, 15);
 						}
 					}
 				}
@@ -584,7 +584,7 @@ void HelloWorld::conTact(float delta) {
 }
 void HelloWorld::playerMove(float delta) {
 	//drop when it is not on the floor
-	if (!jumping&&!onStair&&!standBy) {
+	if (!jumping&&!onStair&&!standBy&&canmove) {
 		drop();
 	}
 	playerWalk();
@@ -684,18 +684,19 @@ void HelloWorld::playerWalk() {
 	if (onStair) {
 		if (up == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
-			speed.x = 0;
+			//speed.x = 0;
 			speed.y = 200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		if (down == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
-			speed.x = 0;
+			//speed.x = 0;
 			speed.y = -200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		if (up == down&&!standBy) {
-			player->getPhysicsBody()->setVelocity(Vec2(0, 0));
+			Vec2 speed = player->getPhysicsBody()->getVelocity();
+			player->getPhysicsBody()->setVelocity(Vec2(speed.x, 0));
 		}
 	}
 	if (standBy) {
@@ -882,6 +883,11 @@ void HelloWorld::initAnimate() {
 	popenWindow = loadAnimate("gif//009-window-open.gif", 1, false);
 	pnoidea = loadAnimate("gif//008-no-idea.gif", 1, false);
 	patticopen = loadAnimate("gif//010-attic-open.gif", 1, false);
+	poutfire = loadAnimate("gif//011-outfire.gif", 1, false);
+	pdooropen = loadAnimate("gif//012-door-open.gif", 1, false);
+	poilthrow = loadAnimate("gif//013-oil-throw.gif", 1, false);
+	pfire = loadAnimate("gif//014-fire.gif", 1, false);
+	pturn = loadAnimate("gif//015-turn.gif", 1, false);
 	//fall
 }
 void HelloWorld::playerAction() {

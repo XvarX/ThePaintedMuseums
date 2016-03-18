@@ -76,6 +76,11 @@ private:
 	Animation* pjump;
 	Animation* ptemp;
 	Animation* pfall;
+	Animation* poutfire;
+	Animation* pdooropen;
+	Animation* poilthrow;
+	Animation* pfire;
+	Animation* pturn;
 	Animation* precovery;
 	Animation* pdownStair;
 	Animation* pupStair;
