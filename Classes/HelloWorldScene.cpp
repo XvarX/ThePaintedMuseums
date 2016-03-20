@@ -29,7 +29,7 @@ Scene* HelloWorld::createScene()
 }
 
 void HelloWorld::setScene() {
-	background = Sprite::create("bacground_out.jpg");
+	background = Sprite::create("background03-20.jpg");
 	background->setPosition(background->getContentSize() / 2);
 
 	Image* backgroundImage = new Image();
@@ -98,10 +98,13 @@ void HelloWorld::setGame() {
 	auto zone002 = rootNode->getChildByName("Zone")->getChildByName("Zone002");
 	setPlayerPositionByZone(player, zone001);
 	setPlayerPositionByZone(princess, zone002);
-	player->setPosition(Vec2(6600, 5900));
+	camera = Node::create();
+	camera->setPosition(player->getPosition() + Vec2(384, 216));
+	//player->setPosition(Vec2(6600, 5900));
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
+	m_UI_Game->addChild(camera);
 }
 
 void HelloWorld::configPhy() {
@@ -161,6 +164,9 @@ void HelloWorld::configPhy() {
 			backgroundBody->addShape(PhysicsShapePolygon::create(points, num));
 		}
 	}
+	auto cameraBody = PhysicsBody::createBox(Size(0,0));
+	cameraBody->setGravityEnable(false);
+	camera->setPhysicsBody(cameraBody);
 }
 
 void HelloWorld::configSchedule() {
@@ -169,9 +175,11 @@ void HelloWorld::configSchedule() {
 
 	//playerMove schedule
 	schedule(schedule_selector(HelloWorld::playerMove), 1.0 / 60, kRepeatForever, 0);
+	schedule(schedule_selector(HelloWorld::changeLocation), 1.0 / 120, kRepeatForever, 0);
+	
 	schedule(schedule_selector(HelloWorld::conTact), 1.0 / 60, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::canMove), 1.0 / 60, kRepeatForever, 0);
-	schedule(schedule_selector(HelloWorld::changeLocation), 1.0 / 60, kRepeatForever, 0);
+	schedule(schedule_selector(HelloWorld::cameraMove), 1.0 / 60, kRepeatForever, 0);
 }
 
 void HelloWorld::configEventListener() {
@@ -217,6 +225,7 @@ bool HelloWorld::init()
 	playerState = 0;
 	dropspeed = 0;
 	droping = false;
+	cameramove = false;
 	jumping = false;
 	onStair = false;
 	standBy = false;
@@ -234,7 +243,7 @@ bool HelloWorld::init()
 	configEventListener();
 
 	//background follow
-	auto follow = Follow::create(player);
+	auto follow = Follow::create(camera);
 	this->runAction(follow);
 
 	//event listener
@@ -276,6 +285,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					stopAnimate();
 					ajump->setTag(5);
 					player->runAction(ajump);
+					//camera->runAction(jumpBy);
 					playerState = 5;
 				}
 				if (onStair) {
@@ -434,7 +444,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 									auto dad = (Sprite*)m_UI_Game->getChildByName("dad");
 
 									dad->runAction(MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y)));
-									playerAction(poilthrow, 14);
+									playerAction(pfire, 14);
 								}
 								else {
 									playerAction(pnoidea, 8);
@@ -450,7 +460,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							Sprite *event010 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event010");
 							auto eventobject = (Construct*)event010->getUserData();
 							eventobject->setState(1);
-							playerAction(poilthrow, 15);
+							playerAction(pturn, 15);
 						}
 					}
 				}
@@ -592,6 +602,17 @@ void HelloWorld::playerMove(float delta) {
 		fixPosition();
 	}
 }
+
+void HelloWorld::cameraMove(float delta) {
+	auto a = player->getPosition()+Vec2(384.0,216.0)+(!Location)*Vec2(-768, 0);
+	if (!cameramove) {
+		if (camera->getActionByTag(1) == NULL) {
+			auto moveto = MoveTo::create(0.25, a);
+			moveto->setTag(1);
+			camera->runAction(moveto);
+		}
+	}
+}
 void HelloWorld::playerWalk() {
 	if (left == true&&canmove) {
 		Location = false;
@@ -631,6 +652,7 @@ void HelloWorld::playerWalk() {
 		}
 
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 	}
 	else if (right == true&&canmove) {
 		Location = true;
@@ -668,11 +690,13 @@ void HelloWorld::playerWalk() {
 			speed.x = 0;
 		}
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 	}
 	if (right == left && canmove) {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		speed.x = 0;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		if (playerState == 1|| playerState == -1 ||playerState == 3||playerState == 4) {
 			stopAnimate();
 			Animate* aStand = Animate::create(pStand);
@@ -687,16 +711,19 @@ void HelloWorld::playerWalk() {
 			//speed.x = 0;
 			speed.y = 200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		if (down == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			//speed.x = 0;
 			speed.y = -200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		if (up == down&&!standBy) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, 0));
+			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, 0));
 		}
 	}
 	if (standBy) {
@@ -705,17 +732,20 @@ void HelloWorld::playerWalk() {
 			speed.x = 0;
 			speed.y = -200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		else if (up != true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			speed.y = 0;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 	}
 	if (!canmove) {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		speed.x = 0;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 	}
 }
 void HelloWorld::update(float dt)
@@ -726,6 +756,28 @@ void HelloWorld::update(float dt)
 	}
 }
 void HelloWorld::changeLocation(float dt) {
+	if (Location != player->isFlippedX()) {
+		if (Location) {
+			auto actionDone = CallFuncN::create([&](Ref* sender) {
+				cameramove = false;
+			});
+			auto a = player->getPosition() + Vec2(384.0, 216.0) + (!Location)*Vec2(-768, 0);
+			auto moveto = MoveTo::create(0.5, a);
+			auto action = Sequence::create(moveto, actionDone, NULL);
+			cameramove = true;
+			camera->runAction(action);
+
+		}
+		else {
+			auto actionDone = CallFuncN::create([&](Ref* sender) {
+				cameramove = false;
+			});
+			auto moveby = MoveBy::create(0.5, Vec2(-768, 0));
+			auto action = Sequence::create(moveby, actionDone, NULL);
+			cameramove = true;
+			camera->runAction(action);
+		}
+	}
 	player->setFlippedX(Location);
 }
 void HelloWorld::drop() {
@@ -742,6 +794,7 @@ void HelloWorld::drop() {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		speed.y = -250*1.3;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		if (playerState != 6&&!onxiepo) {
 			Animate* afall = Animate::create(pfall);
 			stopAnimate();
@@ -754,6 +807,7 @@ void HelloWorld::drop() {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		speed.y = 0;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		if (droping == true) {
 			droping = false;
 			auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
@@ -784,6 +838,7 @@ void HelloWorld::fixPosition() {
 		if (leftBottom.a == 255&&leftBottom.g < 100) {
 			speed.y = 200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			if (playerState == 5) {
 				playerState = -1;
 			}

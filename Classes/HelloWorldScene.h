@@ -38,9 +38,12 @@ public:
 	void updateStart(float delta);
 	int wallBesideLeft();
 	void playerMove(float delta);
+
+	void cameraMove(float delta);
 	void conTact(float delta);
 	void playerAction();
 	void canMove(float delta);
+	
 	void changeLocation(float delta);
 	void addNewItem(string itemName, Point ItemPos, int a, int b, int c, int d);
 	void fixPosition();
@@ -53,6 +56,7 @@ public:
 private:
 	bool left;
 	bool right;
+	bool cameramove;
 	bool up;
 	bool down;
 	Node* rootNode;
@@ -99,7 +103,7 @@ private:
 	Vector<Node*> objectsVector;
 	Vector<Node*> StandBysVector;
 	Vector<Node*> XieposVector;
-
+	Node* camera;
 	Layer* m_UI_Dialog;			//对话框层 最高层
 	Layer* m_UI_Tool;			//工具栏层 次高层
 	Layer* m_UI_Game;			//游戏层 低层
