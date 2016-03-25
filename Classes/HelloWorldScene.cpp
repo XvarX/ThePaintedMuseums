@@ -52,7 +52,7 @@ void HelloWorld::setGame() {
 	player->runAction(FlipX::create(true));
 	//player->setScale(0.5);
 	auto a = player->getContentSize();
-	Sprite* princess = Sprite::create("princess.png");
+	princess = Sprite::create("princess.png");
 	princess->setName("princess");
 	//contactor set
 	auto backgroundterm = static_cast<Sprite*>(rootNode->getChildByName("background1_1out"));
@@ -98,9 +98,9 @@ void HelloWorld::setGame() {
 	auto zone002 = rootNode->getChildByName("Zone")->getChildByName("Zone002");
 	setPlayerPositionByZone(player, zone001);
 	setPlayerPositionByZone(princess, zone002);
-	camera = Node::create();
+	camera = Sprite::create("camera.jpg");
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
-	//player->setPosition(Vec2(6600, 5900));
+	//player->setPosition(Vec2(7200, 1600));
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
@@ -131,7 +131,7 @@ void HelloWorld::configPhy() {
 
 	//physics player init
 	PhysicsMaterial material;
-	auto playerBody = PhysicsBody::createBox(Size(158,330));
+	auto playerBody = PhysicsBody::createBox(Size(26,313));
 	
 	playerBody->setRotationEnable(false);
 	playerBody->setGravityEnable(false);
@@ -164,7 +164,7 @@ void HelloWorld::configPhy() {
 			backgroundBody->addShape(PhysicsShapePolygon::create(points, num));
 		}
 	}
-	auto cameraBody = PhysicsBody::createBox(Size(0,0));
+	auto cameraBody = PhysicsBody::create();
 	cameraBody->setGravityEnable(false);
 	camera->setPhysicsBody(cameraBody);
 }
@@ -279,13 +279,14 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				if (!jumping&&!droping&&(!onStair||standBy)) {
 					jumping = true;
 					auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
+					auto jumpbb = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
 					auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
 					player->runAction(action);
+					//camera->runAction(jumpbb);
 					Animate* ajump = Animate::create(pjump);
 					stopAnimate();
 					ajump->setTag(5);
 					player->runAction(ajump);
-					//camera->runAction(jumpBy);
 					playerState = 5;
 				}
 				if (onStair) {
@@ -306,6 +307,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							m_UI_Game->removeChild(projectile);
 							player->addChild(projectile);
 							itemsVectorInPlayer.pushBack(projectile);
+							showItem(projectile->getName());
+							playerAction(pget, 18);
 						}
 				}
 			}
@@ -338,7 +341,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						auto object = (Construct*)projectile->getUserData();
 						if (object->getState() != -1) {
 							object->setState(-1);
-							addNewItem("umbrella", Point(4640, 1801), 2291, 926, 155, 155);
+							//addNewItem("umbrella", Point(4640, 1801), 2291, 926, 155, 155);
+							playerAction(psearch, 17, "umbrella");
 						}
 					}
 					if (projectile->getName() == "Object009") {
@@ -346,7 +350,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						if (object->getState() != -1) {
 							object->setState(-1);
 							int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
-							addNewItem("bucket", Point(5250, y), 2520, 926, 155, 155);
+							//addNewItem("bucket", Point(5250, y), 2520, 926, 155, 155);
+							playerAction(psearch, 17, "bucket");
 						}
 					}
 					if (projectile->getName() == "Object012") {
@@ -370,7 +375,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						if (object->getState() != -1) {
 							object->setState(-1);
 							int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
-							addNewItem("oilbucket", Point(6680, 5158), 2071, 1127, 155, 155);
+							//addNewItem("oilbucket", Point(6680, 5158), 2071, 1127, 155, 155);
+							playerAction(psearch, 17, "oilbucket");
 						}
 					}
 					if (projectile->getName() == "Object015") {
@@ -390,7 +396,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						auto object = (Construct*)projectile->getUserData();
 						if (object->getState() != -1) {
 							object->setState(-1);
-							addNewItem("roomKey", projectile->getPosition(), 2290, 1127, 155, 155);
+							//addNewItem("roomKey", projectile->getPosition(), 2290, 1127, 155, 155);
+							playerAction(psearch, 17, "roomKey");
 						}
 					}
 					if (projectile->getName() == "Object020") {
@@ -417,7 +424,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						auto object = (Construct*)projectile->getUserData();
 						if (object->getState() != -1) {
 							object->setState(-1);
-							addNewItem("match", projectile->getPosition(), 2520, 1127, 155, 155);
+							//addNewItem("match", projectile->getPosition(), 2520, 1127, 155, 155);
+							playerAction(psearch, 17, "match");
 						}
 					}
 					if (projectile->getName() == "Object025") {
@@ -484,42 +492,9 @@ void HelloWorld::conTact(float delta) {
 			if (projectile->getName() == "Event001") {
 				auto object = (Construct*)projectile->getUserData();
 				if (object->getState() == 0) {
-					bool findit = false;
-					for (int j = 0; j < itemsVectorInMap.size(); j++) {
-						Sprite *itemile = (CCSprite *)itemsVectorInMap.at(j);
-						if (itemile->getName() == "hairpin") {
-							findit = true;
-							break;
-						}
-					}
-					if (!findit) {
-						/*auto pop = PopScene::createScene();
-						pop->setName("pop");
-						int *a = new int;
-						*a = 5;
-						pop->setUserData(a);
-						m_UI_Dialog->addChild(pop);*/
-						Sprite* hairpin = Sprite::create("player.png", CCRectMake(2069, 926, 155, 155));
-						hairpin->setName("hairpin");
-						hairpin->setPosition(Vec2(2734, 3947));
-						m_UI_Game->addChild(hairpin);
-						itemsVectorInMap.pushBack(hairpin);
-					}
 					object->setState(-1);
-					auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
-						canmove = true;
-						auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
-						princess->stopActionByTag(66);
-						Animate* aprincessWalk = Animate::create(princessStand);
-						aprincessWalk->setTag(88);
-						princess->runAction(aprincessWalk);
-					});
 					canmove = false;
-					auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
-					Animate* aprincessThrow = Animate::create(princessTemp);
-					auto action = Sequence::create(aprincessThrow, actionMoveDone, NULL);
-					action->setTag(66);
-					princess->runAction(action);
+					princesscomming();
 				}
 			}
 
@@ -560,6 +535,7 @@ void HelloWorld::conTact(float delta) {
 			}
 		}
 	}
+	bool tempstandBy = standBy;
 	standBy = false;
 	for (int i = 0; i < StandBysVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)StandBysVector.at(i);
@@ -567,6 +543,9 @@ void HelloWorld::conTact(float delta) {
 			standBy = true;
 			droping = false;
 		}
+	}
+	if (tempstandBy == true && standBy == false) {
+		playerState = -1;
 	}
 	onxiepo = false;
 	rotation = 0;
@@ -594,7 +573,7 @@ void HelloWorld::conTact(float delta) {
 }
 void HelloWorld::playerMove(float delta) {
 	//drop when it is not on the floor
-	if (!jumping&&!onStair&&!standBy&&canmove) {
+	if (!jumping&&!onStair&&!standBy) {
 		drop();
 	}
 	playerWalk();
@@ -605,12 +584,9 @@ void HelloWorld::playerMove(float delta) {
 
 void HelloWorld::cameraMove(float delta) {
 	auto a = player->getPosition()+Vec2(384.0,216.0)+(!Location)*Vec2(-768, 0);
+	auto camearPos = camera->getPosition();
 	if (!cameramove) {
-		if (camera->getActionByTag(1) == NULL) {
-			auto moveto = MoveTo::create(0.25, a);
-			moveto->setTag(1);
-			camera->runAction(moveto);
-		}
+		camera->setPosition(a);
 	}
 }
 void HelloWorld::playerWalk() {
@@ -711,6 +687,13 @@ void HelloWorld::playerWalk() {
 			//speed.x = 0;
 			speed.y = 200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			if (playerState != 16) {
+				stopAnimate();
+				Animate* aclimb = Animate::create(pclimb);
+				aclimb->setTag(16);
+				player->runAction(aclimb);
+				playerState = 16;
+			}
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		if (down == true) {
@@ -718,11 +701,19 @@ void HelloWorld::playerWalk() {
 			//speed.x = 0;
 			speed.y = -200*1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			if (playerState != 16) {
+				stopAnimate();
+				Animate* aclimb = Animate::create(pclimb);
+				aclimb->setTag(16);
+				player->runAction(aclimb);
+				playerState = 16;
+			}
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
 		if (up == down&&!standBy) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, 0));
+			
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, 0));
 		}
 	}
@@ -739,7 +730,11 @@ void HelloWorld::playerWalk() {
 			speed.y = 0;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
+			if (playerState == 6) {
+				playerState = -1;
+			}
 		}
+
 	}
 	if (!canmove) {
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
@@ -760,22 +755,31 @@ void HelloWorld::changeLocation(float dt) {
 		if (Location) {
 			auto actionDone = CallFuncN::create([&](Ref* sender) {
 				cameramove = false;
+				canmove = true;
 			});
 			auto a = player->getPosition() + Vec2(384.0, 216.0) + (!Location)*Vec2(-768, 0);
 			auto moveto = MoveTo::create(0.5, a);
+			
 			auto action = Sequence::create(moveto, actionDone, NULL);
-			cameramove = true;
-			camera->runAction(action);
+			if (!jumping&&!droping) {
+				cameramove = true;
+				canmove = false;
+				camera->runAction(action);
+			}
 
 		}
 		else {
 			auto actionDone = CallFuncN::create([&](Ref* sender) {
 				cameramove = false;
+				canmove = true;
 			});
 			auto moveby = MoveBy::create(0.5, Vec2(-768, 0));
 			auto action = Sequence::create(moveby, actionDone, NULL);
-			cameramove = true;
-			camera->runAction(action);
+			if (!jumping&&!droping) {
+				cameramove = true;
+				canmove = false;
+				camera->runAction(action);
+			}
 		}
 	}
 	player->setFlippedX(Location);
@@ -910,7 +914,8 @@ void HelloWorld::addNewItem(string itemName, Point pos, int a, int b, int c, int
 		}
 	}
 	if (!findit) {
-		Sprite* item = Sprite::create("player.png", CCRectMake(a, b, c, d));
+		string path = "item//" + itemName + ".png";
+		Sprite* item = Sprite::create(path);
 		item->setName(itemName);
 		item->setPosition(pos);
 		m_UI_Game->addChild(item);
@@ -943,6 +948,14 @@ void HelloWorld::initAnimate() {
 	poilthrow = loadAnimate("gif//013-oil-throw.gif", 1, false);
 	pfire = loadAnimate("gif//014-fire.gif", 1, false);
 	pturn = loadAnimate("gif//015-turn.gif", 1, false);
+	pclimb = loadAnimate("gif//016-climb.gif", -1, false);
+	pget = loadAnimate("gif//018-get.gif", 1, false);
+	psearch = loadAnimate("gif//017-search.gif", 1, false);
+
+	prstand = loadAnimate("gifByPricness//000-stand.gif", -1, false);
+	prkao = loadAnimate("gifByPricness//001-kao.gif", 1, false);
+	prtalk = loadAnimate("gifByPricness//002-talk.gif", 1, false);
+	prthrow = loadAnimate("gifByPricness//003-throw.gif", 1, false);
 	//fall
 }
 void HelloWorld::playerAction() {
@@ -974,7 +987,7 @@ Animation* HelloWorld::loadAnimate(string path, int times, bool back) {
 	return result;
 }
 void HelloWorld::stopAnimate() {
-	for (int i = 0; i <= 15; i++) {
+	for (int i = 0; i <= 18; i++) {
 		player->stopActionByTag(i);
 	}
 }
@@ -990,4 +1003,69 @@ void HelloWorld::playerAction(Animation* paction, int i) {
 	auto action = Sequence::create(playerTempAction, actionDone, NULL);
 	action->setTag(i);
 	player->runAction(action);
+}
+void HelloWorld::showItem(string Name) {
+	string path = "item//" + Name + ".png";
+	Sprite* item = Sprite::create(path);
+	tempitem = item;
+	item->setName(Name);
+	auto pos = player->getPosition() + Vec2(0,player->getContentSize().height / 2);
+	item->setPosition(pos);
+	m_UI_Game->addChild(item);
+	auto actionDone = CallFuncN::create([&](Ref* sender) {
+		if (itemsVectorInPlayer.find(tempitem) == itemsVectorInPlayer.end()) {
+			m_UI_Game->removeChild(tempitem);
+			player->addChild(tempitem);
+			itemsVectorInPlayer.pushBack(tempitem);
+		}
+	});
+	auto delay = DelayTime::create(0.5);
+	auto action = Sequence::create(delay, actionDone, NULL);
+	item->runAction(action);
+}
+void HelloWorld::playerAction(Animation* paction, int i, string Name) {
+	auto actionDone = CallFuncN::create([&](Ref* sender) {
+		stopAnimate();
+		auto getactionDone = CallFuncN::create([&](Ref* sender) {
+			canmove = true;
+			stopAnimate();
+			playerState = -1;
+		});
+		Animate* getAction = Animate::create(pget);
+		auto allaction = Sequence::create(getAction, getactionDone, NULL);
+		player->runAction(allaction);
+		showItem(itemName);
+
+	});
+	canmove = false;
+	Animate* playerTempAction = Animate::create(paction);
+	stopAnimate();
+	auto action = Sequence::create(playerTempAction, actionDone, NULL);
+	action->setTag(i);
+	itemName = Name;
+	player->runAction(action);
+	playerState = i;
+}
+void HelloWorld::princesscomming() {
+	auto cameraMoveDone = CallFuncN::create([&](Ref* sender) {
+		auto actionDone = CallFuncN::create([&](Ref* sender) {
+			addNewItem("hairpin", Vec2(2734, 3947), 1, 2, 3, 4);
+			Animate* princessStand = Animate::create(prstand);
+			princess->stopAllActions();
+			princess->runAction(princessStand);
+			cameramove = false;
+			canmove = true;
+		});
+		canmove = false;
+		Animate* princessKao = Animate::create(prkao);
+		Animate* princessTalk = Animate::create(prtalk);
+		Animate* princessThrow = Animate::create(prthrow);
+		auto action = Sequence::create(princessKao, princessTalk, princessThrow, actionDone, NULL);
+		princess->runAction(action);
+	});
+	auto pos = (player->getPosition() + princess->getPosition()) / 2;
+	auto cameraaction = MoveTo::create(0.5, pos);
+	auto caction = Sequence::create(cameraaction, cameraMoveDone, NULL);
+	cameramove = true;
+	camera->runAction(caction);
 }

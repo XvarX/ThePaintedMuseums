@@ -28,6 +28,7 @@ public:
 	void initDialog();
 	void stopAnimate();
 	void playerAction(Animation* action,int i);
+	void playerAction(Animation* action, int i,string Name);
 	void initAnimate();
 	Animation* loadAnimate(string path, int times, bool back);
 	virtual void onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
@@ -39,11 +40,12 @@ public:
 	int wallBesideLeft();
 	void playerMove(float delta);
 
+	void princesscomming();
 	void cameraMove(float delta);
 	void conTact(float delta);
 	void playerAction();
 	void canMove(float delta);
-	
+	void showItem(string ItemName);
 	void changeLocation(float delta);
 	void addNewItem(string itemName, Point ItemPos, int a, int b, int c, int d);
 	void fixPosition();
@@ -61,6 +63,8 @@ private:
 	bool down;
 	Node* rootNode;
 	Sprite* player;
+	Sprite* princess;
+	string itemName;
 	Sprite* background;
 	PhysicsWorld* m_world;
 	unsigned char *c_data;
@@ -93,6 +97,16 @@ private:
 	Animation* popenWindow;
 	Animation* patticopen;
 	Animation* pnoidea;
+	Animation* pget;
+	Animation* psearch;
+	Animation* pclimb;
+
+	Animation* prstand;
+	Animation* prkao;
+	Animation* prtalk;
+	Animation* prthrow;
+
+
 	ccColor4B stairBlue;
 	Vector<Node*> contactVector;
 	Vector<Node*> eventVector;
@@ -103,7 +117,8 @@ private:
 	Vector<Node*> objectsVector;
 	Vector<Node*> StandBysVector;
 	Vector<Node*> XieposVector;
-	Node* camera;
+	Sprite* camera;
+	Sprite* tempitem;
 	Layer* m_UI_Dialog;			//对话框层 最高层
 	Layer* m_UI_Tool;			//工具栏层 次高层
 	Layer* m_UI_Game;			//游戏层 低层
