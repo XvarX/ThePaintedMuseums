@@ -39,6 +39,7 @@ public:
 	void updateStart(float delta);
 	int wallBesideLeft();
 	void playerMove(float delta);
+	void actorPlayAction(Sprite* actor, Animation* paction, int actionnum);
 
 	void princesscomming();
 	void cameraMove(float delta);
@@ -64,6 +65,7 @@ private:
 	Node* rootNode;
 	Sprite* player;
 	Sprite* princess;
+	Sprite* dad;
 	string itemName;
 	Sprite* background;
 	PhysicsWorld* m_world;
@@ -71,6 +73,7 @@ private:
 	bool droping;
 	bool jumping;
 	bool canmove;
+	bool kailouti;
 	bool onStair;
 	bool onxiepo;
 	bool standBy;
@@ -106,6 +109,16 @@ private:
 	Animation* prtalk;
 	Animation* prthrow;
 
+	Animation* dadstand;
+	Animation* dadtalk;
+	Animation* dadrun;
+	Animation* dadstanby;
+	Animation* dadoutfire;
+
+	Animation* object002;
+	Animation* object004;
+	Animation* object010;
+	Animation* object013;
 
 	ccColor4B stairBlue;
 	Vector<Node*> contactVector;
@@ -115,6 +128,7 @@ private:
 	Vector<Node*> doorsVector;
 	Vector<Node*> stairsVector;
 	Vector<Node*> objectsVector;
+	Vector<Node*> uselessObjectsVector;
 	Vector<Node*> StandBysVector;
 	Vector<Node*> XieposVector;
 	Sprite* camera;

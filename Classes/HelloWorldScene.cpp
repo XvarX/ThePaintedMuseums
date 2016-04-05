@@ -3,6 +3,7 @@
 #include "ui/CocosGUI.h"
 #include "GifAnimation.h"
 #include "popScence.h"
+#include "ObjectMy.h"
 #include "math\CCMath.h"
 #include "Construct.h"
 #include <math.h>
@@ -33,7 +34,7 @@ void HelloWorld::setScene() {
 	background->setPosition(background->getContentSize() / 2);
 
 	Image* backgroundImage = new Image();
-	backgroundImage->initWithImageFile("background1_1in.png");
+	backgroundImage->initWithImageFile("background1_1_1in.png");
 	c_data = backgroundImage->getData();
 
 	m_UI_Background->addChild(background);
@@ -70,12 +71,26 @@ void HelloWorld::setGame() {
 	doorsVector = Door->getChildren();
 	auto Object = rootNode->getChildByName("Object");
 	objectsVector = Object->getChildren();
+	auto uselessObject = rootNode->getChildByName("UselessObject");
+	uselessObjectsVector = uselessObject->getChildren();
 	auto Stair = rootNode->getChildByName("Stair");
 	
 	stairsVector = Stair->getChildren();
 	for (int i = 0; i < objectsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)objectsVector.at(i);
 		Construct *newObject = new Construct(projectile->getName(), i);
+		projectile->setUserData(newObject);	
+	}
+
+	for (int i = 0; i < uselessObjectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)uselessObjectsVector.at(i);
+		ObjectMy *newObject;
+		if (projectile->getName() == "Object013") {
+			newObject = new ObjectMy(projectile->getName(), i, false);
+		}
+		else {
+			newObject = new ObjectMy(projectile->getName(), i, true);
+		}
 		projectile->setUserData(newObject);
 	}
 
@@ -100,7 +115,7 @@ void HelloWorld::setGame() {
 	setPlayerPositionByZone(princess, zone002);
 	camera = Sprite::create("camera.jpg");
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
-	//player->setPosition(Vec2(7200, 1600));
+	player->setPosition(Vec2(4800, 3200));
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
@@ -225,6 +240,7 @@ bool HelloWorld::init()
 	playerState = 0;
 	dropspeed = 0;
 	droping = false;
+	kailouti = false;
 	cameramove = false;
 	jumping = false;
 	onStair = false;
@@ -363,6 +379,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								Sprite *stair02 = (CCSprite *)rootNode->getChildByName("Stair")->getChildByName("Stair02");
 								auto eventobject = (Construct*)stair02->getUserData();
 								eventobject->setState(0);
+								kailouti = true;
 								playerAction(patticopen, 10);
 							}
 							else {
@@ -377,6 +394,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
 							//addNewItem("oilbucket", Point(6680, 5158), 2071, 1127, 155, 155);
 							playerAction(psearch, 17, "oilbucket");
+							projectile->setVisible(false);
+							
 						}
 					}
 					if (projectile->getName() == "Object015") {
@@ -407,12 +426,12 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								object->setState(-1);
 								//play
 								rootNode->getChildByName("Door")->removeChildByName("Door004");
-								Sprite* dad = Sprite::create("dad.png");
+								dad = Sprite::create("dad.png");
 								dad->setName("dad");
 								auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
 								m_UI_Game->addChild(dad);
 								setPlayerPositionByZone(dad, zone006);
-
+								actorPlayAction(dad, dadstand, 1);
 								playerAction(pdooropen, 12);
 							}
 							else {
@@ -449,9 +468,18 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 									object->setState(-1);
 									//play
 									auto posZone7 = rootNode->getChildByName("Zone")->getChildByName("Zone007");
-									auto dad = (Sprite*)m_UI_Game->getChildByName("dad");
 
-									dad->runAction(MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y)));
+									dad->stopAllActions();
+									Animate* dadAction1 = Animate::create(dadstanby);
+									Animate* dadAction2 = Animate::create(dadrun);
+									dad->setFlippedX(true);
+									dad->runAction(Sequence::create(dadAction1, dadAction2,NULL));
+									auto move = MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y));
+									auto moveDone = CallFuncN::create([&](Ref* sender) {
+										actorPlayAction(dad, dadoutfire, 5);
+									});
+									auto dadaction = Sequence::create(move, moveDone, NULL);
+									dad->runAction(dadaction);
 									playerAction(pfire, 14);
 								}
 								else {
@@ -471,6 +499,17 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							playerAction(pturn, 15);
 						}
 					}
+				}
+			}
+
+			for (int i = 0; i < uselessObjectsVector.size(); i++) {
+				Sprite *projectile = (CCSprite *)uselessObjectsVector.at(i);
+				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+						auto object = (ObjectMy*)projectile->getUserData();
+						projectile->stopAllActions();
+						auto a = object->objectplay();
+						auto action = Animate::create(a);
+						projectile->runAction(action);
 				}
 			}
 		}
@@ -531,7 +570,9 @@ void HelloWorld::conTact(float delta) {
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
 			auto object = (Construct*)projectile->getUserData();
 			if (object->getState() == 0) {
-				onStair = true;
+				if (abs(player->getPosition().x - projectile->getPosition().x) < 30) {
+					onStair = true;
+				}
 			}
 		}
 	}
@@ -540,8 +581,10 @@ void HelloWorld::conTact(float delta) {
 	for (int i = 0; i < StandBysVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)StandBysVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-			standBy = true;
-			droping = false;
+			if (abs(player->getPosition().x - projectile->getPosition().x) < 30) {
+				standBy = true;
+				droping = false;
+			}
 		}
 	}
 	if (tempstandBy == true && standBy == false) {
@@ -573,7 +616,7 @@ void HelloWorld::conTact(float delta) {
 }
 void HelloWorld::playerMove(float delta) {
 	//drop when it is not on the floor
-	if (!jumping&&!onStair&&!standBy) {
+	if (!jumping&&!onStair&&!standBy&&!kailouti) {
 		drop();
 	}
 	playerWalk();
@@ -956,6 +999,12 @@ void HelloWorld::initAnimate() {
 	prkao = loadAnimate("gifByPricness//001-kao.gif", 1, false);
 	prtalk = loadAnimate("gifByPricness//002-talk.gif", 1, false);
 	prthrow = loadAnimate("gifByPricness//003-throw.gif", 1, false);
+
+	dadstand = loadAnimate("gifByDad//001-stand.gif", -1, false);
+	dadtalk  = loadAnimate("gifByDad//002-talk.gif", 1, false);
+	dadrun = loadAnimate("gifByDad//003-run.gif", -1, false);
+	dadstanby = loadAnimate("gifByDad//004-standby.gif", 1, false);
+	dadoutfire = loadAnimate("gifByDad//005-outfire.gif", -1, false);
 	//fall
 }
 void HelloWorld::playerAction() {
@@ -995,6 +1044,7 @@ void HelloWorld::playerAction(Animation* paction, int i) {
 	auto actionDone = CallFuncN::create([&](Ref* sender) {
 		canmove = true;
 		stopAnimate();
+		kailouti = false;
 		playerState = -1;
 	});
 	canmove = false;
@@ -1068,4 +1118,10 @@ void HelloWorld::princesscomming() {
 	auto caction = Sequence::create(cameraaction, cameraMoveDone, NULL);
 	cameramove = true;
 	camera->runAction(caction);
+}
+void HelloWorld::actorPlayAction(Sprite* actor, Animation* paction, int actionnum) {
+	actor->stopAllActions();
+	Animate* playerTempAction = Animate::create(paction);
+	playerTempAction->setTag(actionnum);
+	actor->runAction(playerTempAction);
 }
