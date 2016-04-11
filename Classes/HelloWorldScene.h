@@ -26,6 +26,7 @@ public:
 	void configEventListener();
 	bool initLayer();
 	void initDialog();
+	void initItemMenu();
 	void stopAnimate();
 	void playerAction(Animation* action,int i);
 	void playerAction(Animation* action, int i,string Name);
@@ -43,6 +44,8 @@ public:
 
 	void princesscomming();
 	void cameraMove(float delta);
+	void cameraMoveLeft(float delta);
+	void itemMenuMove(float delta);
 	void conTact(float delta);
 	void playerAction();
 	void canMove(float delta);
@@ -66,6 +69,7 @@ private:
 	Sprite* player;
 	Sprite* princess;
 	Sprite* dad;
+	Sprite* itemMenu;
 	string itemName;
 	Sprite* background;
 	PhysicsWorld* m_world;
@@ -77,7 +81,7 @@ private:
 	bool onStair;
 	bool onxiepo;
 	bool standBy;
-	bool Location;
+	bool Location; // false = left  right = true
 	float rotation;
 	bool playingAction;
 	int playerState;
@@ -135,6 +139,7 @@ private:
 	Sprite* tempitem;
 	Layer* m_UI_Dialog;			//对话框层 最高层
 	Layer* m_UI_Tool;			//工具栏层 次高层
+	Layer* m_UI_Player;         //玩家层 再次高层
 	Layer* m_UI_Game;			//游戏层 低层
 	Layer* m_UI_Background;		//背景层 底层
 };

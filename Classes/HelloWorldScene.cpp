@@ -8,6 +8,7 @@
 #include "Construct.h"
 #include <math.h>
 #include "HelloWorlD.h"
+#include "Actor.h"
 
 USING_NS_CC;
 
@@ -74,12 +75,12 @@ void HelloWorld::setGame() {
 	auto uselessObject = rootNode->getChildByName("UselessObject");
 	uselessObjectsVector = uselessObject->getChildren();
 	auto Stair = rootNode->getChildByName("Stair");
-	
+
 	stairsVector = Stair->getChildren();
 	for (int i = 0; i < objectsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)objectsVector.at(i);
 		Construct *newObject = new Construct(projectile->getName(), i);
-		projectile->setUserData(newObject);	
+		projectile->setUserData(newObject);
 	}
 
 	for (int i = 0; i < uselessObjectsVector.size(); i++) {
@@ -124,7 +125,7 @@ void HelloWorld::setGame() {
 
 void HelloWorld::configPhy() {
 	//init door
-	for (int i = 0; i < doorsVector.size();i++) {
+	for (int i = 0; i < doorsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)doorsVector.at(i);
 		projectile->setVisible(false);
 		auto doorBody = PhysicsBody::createBox(projectile->getContentSize());
@@ -146,8 +147,8 @@ void HelloWorld::configPhy() {
 
 	//physics player init
 	PhysicsMaterial material;
-	auto playerBody = PhysicsBody::createBox(Size(26,313));
-	
+	auto playerBody = PhysicsBody::createBox(Size(26, 313));
+
 	playerBody->setRotationEnable(false);
 	playerBody->setGravityEnable(false);
 	player->setPhysicsBody(playerBody);
@@ -164,7 +165,7 @@ void HelloWorld::configPhy() {
 	CCDictionary* backgroundDic = dynamic_cast<CCDictionary*>(bodyDic->objectForKey("background1_1in"));
 	CCArray* fixturesArr = dynamic_cast<CCArray*>(backgroundDic->objectForKey("fixtures"));
 
-	for (int fixtureNum = 0;fixtureNum < fixturesArr->count();fixtureNum++) {
+	for (int fixtureNum = 0; fixtureNum < fixturesArr->count(); fixtureNum++) {
 		CCDictionary* eachDic = dynamic_cast<CCDictionary*>(fixturesArr->getObjectAtIndex(fixtureNum));
 		CCArray* polygonsArr = dynamic_cast<CCArray*>(eachDic->objectForKey("polygons"));
 		for (int polygonsNum = 0; polygonsNum < polygonsArr->count(); polygonsNum++) {
@@ -191,10 +192,11 @@ void HelloWorld::configSchedule() {
 	//playerMove schedule
 	schedule(schedule_selector(HelloWorld::playerMove), 1.0 / 60, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::changeLocation), 1.0 / 120, kRepeatForever, 0);
-	
+
 	schedule(schedule_selector(HelloWorld::conTact), 1.0 / 60, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::canMove), 1.0 / 60, kRepeatForever, 0);
-	schedule(schedule_selector(HelloWorld::cameraMove), 1.0 / 60, kRepeatForever, 0);
+	//schedule(schedule_selector(HelloWorld::cameraMove), 1.0 / 60, kRepeatForever, 0);
+	//schedule(schedule_selector(HelloWorld::itemMenuMove), 1.0 / 60, kRepeatForever, 0);
 }
 
 void HelloWorld::configEventListener() {
@@ -252,6 +254,7 @@ bool HelloWorld::init()
 	rootNode = CSLoader::createNode("MainScene.csb");
 	initLayer();
 	initAnimate();
+	initItemMenu();
 	setScene();
 	setGame();
 	configPhy();
@@ -280,239 +283,239 @@ void HelloWorld::onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* e
 	}
 }
 void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
-		if (keyCode == EventKeyboard::KeyCode::KEY_A) {
-			left = true;
+	if (keyCode == EventKeyboard::KeyCode::KEY_A) {
+		left = true;
+	}
+	else if (keyCode == EventKeyboard::KeyCode::KEY_D) {
+		right = true;
+	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_W) {
+		if (canmove) {
+			auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
+				jumping = false;
+				stopAnimate();
+			});
+			if (!jumping&&!droping && (!onStair || standBy)) {
+				jumping = true;
+				auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
+				auto jumpbb = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
+				auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
+				player->runAction(action);
+				//camera->runAction(jumpbb);
+				Animate* ajump = Animate::create(pjump);
+				stopAnimate();
+				ajump->setTag(5);
+				player->runAction(ajump);
+				playerState = 5;
+			}
+			if (onStair) {
+				up = true;
+			}
 		}
-		else if (keyCode == EventKeyboard::KeyCode::KEY_D) {
-			right = true;
+	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_S) {
+		if (onStair || standBy) {
+			down = true;
 		}
-		if (keyCode == EventKeyboard::KeyCode::KEY_W) {
-			if (canmove) {
-				auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
-					jumping = false;
-					stopAnimate();
-				});
-				if (!jumping&&!droping&&(!onStair||standBy)) {
-					jumping = true;
-					auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
-					auto jumpbb = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
-					auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
-					player->runAction(action);
-					//camera->runAction(jumpbb);
-					Animate* ajump = Animate::create(pjump);
-					stopAnimate();
-					ajump->setTag(5);
-					player->runAction(ajump);
-					playerState = 5;
-				}
-				if (onStair) {
-					up = true;
+	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_J) {
+		for (int i = 0; i < itemsVectorInMap.size(); i++) {
+			Sprite *projectile = (CCSprite *)itemsVectorInMap.at(i);
+			if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+				if (itemsVectorInPlayer.find(projectile) == itemsVectorInPlayer.end()) {
+					m_UI_Game->removeChild(projectile);
+					player->addChild(projectile);
+					itemsVectorInPlayer.pushBack(projectile);
+					showItem(projectile->getName());
+					playerAction(pget, 18);
 				}
 			}
 		}
-		if (keyCode == EventKeyboard::KeyCode::KEY_S) {
-			if (onStair||standBy) {                                             
-				down = true;
-			}
-		}
-		if (keyCode == EventKeyboard::KeyCode::KEY_J) {
-			for (int i = 0; i < itemsVectorInMap.size();i++) {
-				Sprite *projectile = (CCSprite *)itemsVectorInMap.at(i);
-				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-						if (itemsVectorInPlayer.find(projectile) == itemsVectorInPlayer.end()) {
-							m_UI_Game->removeChild(projectile);
-							player->addChild(projectile);
-							itemsVectorInPlayer.pushBack(projectile);
-							showItem(projectile->getName());
-							playerAction(pget, 18);
+
+		for (int i = 0; i < objectsVector.size(); i++) {
+			Sprite *projectile = (CCSprite *)objectsVector.at(i);
+			if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+				if (projectile->getName() == "Object001") {
+					if (player->getChildByName("hairpin") != NULL) {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							object->setState(-1);
+							rootNode->getChildByName("Door")->removeChildByName("Door001");
+							auto posZone4 = rootNode->getChildByName("Zone")->getChildByName("Zone004");
+							auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
+
+							princess->runAction(MoveTo::create(5.0, Point(posZone4->getPosition().x, princess->getPosition().y)));
+
+							playerAction(popenWindow, 9);
 						}
+					}
+					else {
+						auto object = (Construct*)projectile->getUserData();
+						if (object->getState() != -1) {
+							playerAction(pnoidea, 8);
+						}
+					}
 				}
-			}
-			
-			for (int i = 0; i < objectsVector.size(); i++) {
-				Sprite *projectile = (CCSprite *)objectsVector.at(i);
-				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-					if (projectile->getName() == "Object001") {
-						if (player->getChildByName("hairpin") != NULL) {
-							auto object = (Construct*)projectile->getUserData();
-							if (object->getState() != -1) {
-								object->setState(-1);
-								rootNode->getChildByName("Door")->removeChildByName("Door001");
-								auto posZone4 = rootNode->getChildByName("Zone")->getChildByName("Zone004");
-								auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
-
-								princess->runAction(MoveTo::create(5.0, Point(posZone4->getPosition().x, princess->getPosition().y)));
-
-								playerAction(popenWindow, 9);
-							}
+				if (projectile->getName() == "Object008") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						object->setState(-1);
+						//addNewItem("umbrella", Point(4640, 1801), 2291, 926, 155, 155);
+						playerAction(psearch, 17, "umbrella");
+					}
+				}
+				if (projectile->getName() == "Object009") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						object->setState(-1);
+						int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
+						//addNewItem("bucket", Point(5250, y), 2520, 926, 155, 155);
+						playerAction(psearch, 17, "bucket");
+					}
+				}
+				if (projectile->getName() == "Object012") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						if (player->getChildByName("umbrella") != NULL) {
+							object->setState(-1);
+							//play
+							Sprite *stair02 = (CCSprite *)rootNode->getChildByName("Stair")->getChildByName("Stair02");
+							auto eventobject = (Construct*)stair02->getUserData();
+							eventobject->setState(0);
+							kailouti = true;
+							playerAction(patticopen, 10);
 						}
 						else {
-							auto object = (Construct*)projectile->getUserData();
-							if (object->getState() != -1) {
-								playerAction(pnoidea, 8);
-							}
-						}
-					}
-					if (projectile->getName() == "Object008") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							object->setState(-1);
-							//addNewItem("umbrella", Point(4640, 1801), 2291, 926, 155, 155);
-							playerAction(psearch, 17, "umbrella");
-						}
-					}
-					if (projectile->getName() == "Object009") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							object->setState(-1);
-							int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
-							//addNewItem("bucket", Point(5250, y), 2520, 926, 155, 155);
-							playerAction(psearch, 17, "bucket");
-						}
-					}
-					if (projectile->getName() == "Object012") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							if (player->getChildByName("umbrella") != NULL) {
-								object->setState(-1);
-								//play
-								Sprite *stair02 = (CCSprite *)rootNode->getChildByName("Stair")->getChildByName("Stair02");
-								auto eventobject = (Construct*)stair02->getUserData();
-								eventobject->setState(0);
-								kailouti = true;
-								playerAction(patticopen, 10);
-							}
-							else {
-								playerAction(pnoidea, 8);
-							}
-						}
-					}
-					if (projectile->getName() == "Object013") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							object->setState(-1);
-							int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
-							//addNewItem("oilbucket", Point(6680, 5158), 2071, 1127, 155, 155);
-							playerAction(psearch, 17, "oilbucket");
-							projectile->setVisible(false);
-							
-						}
-					}
-					if (projectile->getName() == "Object015") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							if (player->getChildByName("bucket") != NULL) {
-								object->setState(-1);
-								rootNode->getChildByName("Door")->removeChildByName("Door002");
-								playerAction(poutfire,11);
-							}
-							else {
-								playerAction(pnoidea, 8);
-							}
-						}
-					}
-					if (projectile->getName() == "Object018") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							object->setState(-1);
-							//addNewItem("roomKey", projectile->getPosition(), 2290, 1127, 155, 155);
-							playerAction(psearch, 17, "roomKey");
-						}
-					}
-					if (projectile->getName() == "Object020") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							if (player->getChildByName("roomKey") != NULL) {
-								object->setState(-1);
-								//play
-								rootNode->getChildByName("Door")->removeChildByName("Door004");
-								dad = Sprite::create("dad.png");
-								dad->setName("dad");
-								auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
-								m_UI_Game->addChild(dad);
-								setPlayerPositionByZone(dad, zone006);
-								actorPlayAction(dad, dadstand, 1);
-								playerAction(pdooropen, 12);
-							}
-							else {
-								playerAction(pnoidea, 8);
-							}
-						} 
-					}
-					if (projectile->getName() == "Object022") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							object->setState(-1);
-							//addNewItem("match", projectile->getPosition(), 2520, 1127, 155, 155);
-							playerAction(psearch, 17, "match");
-						}
-					}
-					if (projectile->getName() == "Object025") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							if (object->getState() == 0) {
-								if (player->getChildByName("oilbucket") != NULL) {
-									object->setState(1);
-									//play
-									playerAction(poilthrow,13);
-								}
-								else {
-									playerAction(pnoidea, 8);
-								}
-							}
-							else if (object->getState() == 1) {
-								if (player->getChildByName("match") != NULL) {
-									Sprite *event008 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event008");
-									auto eventobject = (Construct*)event008->getUserData();
-									eventobject->setState(1);
-									object->setState(-1);
-									//play
-									auto posZone7 = rootNode->getChildByName("Zone")->getChildByName("Zone007");
-
-									dad->stopAllActions();
-									Animate* dadAction1 = Animate::create(dadstanby);
-									Animate* dadAction2 = Animate::create(dadrun);
-									dad->setFlippedX(true);
-									dad->runAction(Sequence::create(dadAction1, dadAction2,NULL));
-									auto move = MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y));
-									auto moveDone = CallFuncN::create([&](Ref* sender) {
-										actorPlayAction(dad, dadoutfire, 5);
-									});
-									auto dadaction = Sequence::create(move, moveDone, NULL);
-									dad->runAction(dadaction);
-									playerAction(pfire, 14);
-								}
-								else {
-									playerAction(pnoidea, 8);
-								}
-							}
-						}
-					}
-					if (projectile->getName() == "Object026") {
-						auto object = (Construct*)projectile->getUserData();
-						if (object->getState() != -1) {
-							object->setState(-1);
-							rootNode->getChildByName("Door")->removeChildByName("Door006");
-							Sprite *event010 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event010");
-							auto eventobject = (Construct*)event010->getUserData();
-							eventobject->setState(1);
-							playerAction(pturn, 15);
+							playerAction(pnoidea, 8);
 						}
 					}
 				}
-			}
+				if (projectile->getName() == "Object013") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						object->setState(-1);
+						int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
+						//addNewItem("oilbucket", Point(6680, 5158), 2071, 1127, 155, 155);
+						playerAction(psearch, 17, "oilbucket");
+						projectile->setVisible(false);
 
-			for (int i = 0; i < uselessObjectsVector.size(); i++) {
-				Sprite *projectile = (CCSprite *)uselessObjectsVector.at(i);
-				if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
-						auto object = (ObjectMy*)projectile->getUserData();
-						projectile->stopAllActions();
-						auto a = object->objectplay();
-						auto action = Animate::create(a);
-						projectile->runAction(action);
+					}
+				}
+				if (projectile->getName() == "Object015") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						if (player->getChildByName("bucket") != NULL) {
+							object->setState(-1);
+							rootNode->getChildByName("Door")->removeChildByName("Door002");
+							playerAction(poutfire, 11);
+						}
+						else {
+							playerAction(pnoidea, 8);
+						}
+					}
+				}
+				if (projectile->getName() == "Object018") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						object->setState(-1);
+						//addNewItem("roomKey", projectile->getPosition(), 2290, 1127, 155, 155);
+						playerAction(psearch, 17, "roomKey");
+					}
+				}
+				if (projectile->getName() == "Object020") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						if (player->getChildByName("roomKey") != NULL) {
+							object->setState(-1);
+							//play
+							rootNode->getChildByName("Door")->removeChildByName("Door004");
+							dad = Sprite::create("dad.png");
+							dad->setName("dad");
+							auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
+							m_UI_Game->addChild(dad);
+							setPlayerPositionByZone(dad, zone006);
+							actorPlayAction(dad, dadstand, 1);
+							playerAction(pdooropen, 12);
+						}
+						else {
+							playerAction(pnoidea, 8);
+						}
+					}
+				}
+				if (projectile->getName() == "Object022") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						object->setState(-1);
+						//addNewItem("match", projectile->getPosition(), 2520, 1127, 155, 155);
+						playerAction(psearch, 17, "match");
+					}
+				}
+				if (projectile->getName() == "Object025") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						if (object->getState() == 0) {
+							if (player->getChildByName("oilbucket") != NULL) {
+								object->setState(1);
+								//play
+								playerAction(poilthrow, 13);
+							}
+							else {
+								playerAction(pnoidea, 8);
+							}
+						}
+						else if (object->getState() == 1) {
+							if (player->getChildByName("match") != NULL) {
+								Sprite *event008 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event008");
+								auto eventobject = (Construct*)event008->getUserData();
+								eventobject->setState(1);
+								object->setState(-1);
+								//play
+								auto posZone7 = rootNode->getChildByName("Zone")->getChildByName("Zone007");
+
+								dad->stopAllActions();
+								Animate* dadAction1 = Animate::create(dadstanby);
+								Animate* dadAction2 = Animate::create(dadrun);
+								dad->setFlippedX(true);
+								dad->runAction(Sequence::create(dadAction1, dadAction2, NULL));
+								auto move = MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y));
+								auto moveDone = CallFuncN::create([&](Ref* sender) {
+									actorPlayAction(dad, dadoutfire, 5);
+								});
+								auto dadaction = Sequence::create(move, moveDone, NULL);
+								dad->runAction(dadaction);
+								playerAction(pfire, 14);
+							}
+							else {
+								playerAction(pnoidea, 8);
+							}
+						}
+					}
+				}
+				if (projectile->getName() == "Object026") {
+					auto object = (Construct*)projectile->getUserData();
+					if (object->getState() != -1) {
+						object->setState(-1);
+						rootNode->getChildByName("Door")->removeChildByName("Door006");
+						Sprite *event010 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event010");
+						auto eventobject = (Construct*)event010->getUserData();
+						eventobject->setState(1);
+						playerAction(pturn, 15);
+					}
 				}
 			}
 		}
+
+		for (int i = 0; i < uselessObjectsVector.size(); i++) {
+			Sprite *projectile = (CCSprite *)uselessObjectsVector.at(i);
+			if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+				auto object = (ObjectMy*)projectile->getUserData();
+				projectile->stopAllActions();
+				auto a = object->objectplay();
+				auto action = Animate::create(a);
+				projectile->runAction(action);
+			}
+		}
+	}
 }
 
 void HelloWorld::updateStart(float delta)
@@ -525,7 +528,7 @@ void HelloWorld::canMove(float delta) {
 }
 
 void HelloWorld::conTact(float delta) {
-	for (int i = 0; i < eventVector.size();i++) {
+	for (int i = 0; i < eventVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)eventVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
 			if (projectile->getName() == "Event001") {
@@ -598,12 +601,12 @@ void HelloWorld::conTact(float delta) {
 			auto distancex = abs(player->getPosition().x - projectile->getPosition().x);
 			auto xiepohalflength = projectile->getContentSize().width*projectile->getScaleX() / 2 * cos(CC_DEGREES_TO_RADIANS(projectile->getRotation()));
 			auto xiepoheightbegin = projectile->getPosition().y - abs(projectile->getContentSize().width*projectile->getScaleX() / 2 * sin(CC_DEGREES_TO_RADIANS(projectile->getRotation())));
-			if (distancex < xiepohalflength){
+			if (distancex < xiepohalflength) {
 				auto sign = projectile->getRotation() > 0 ? 1 : -1;
 				auto xiepoX = projectile->getPosition().x + sign*xiepohalflength;
-				auto temp_x = xiepoX- player->getPosition().x;
+				auto temp_x = xiepoX - player->getPosition().x;
 				auto temp_y = temp_x*tan(CC_DEGREES_TO_RADIANS(projectile->getRotation()));
-				
+
 				auto fix_y = temp_y + xiepoheightbegin;
 				auto footposition = player->getPosition().y - player->getContentSize().height / 2;
 				if (abs(player->getPosition().y - player->getContentSize().height / 2 - fix_y) < 120) {
@@ -626,16 +629,23 @@ void HelloWorld::playerMove(float delta) {
 }
 
 void HelloWorld::cameraMove(float delta) {
-	auto a = player->getPosition()+Vec2(384.0,216.0)+(!Location)*Vec2(-768, 0);
+	auto a = player->getPosition() + Vec2(384.0, 216.0) + (!Location)*Vec2(-768, 0);
 	auto camearPos = camera->getPosition();
 	if (!cameramove) {
 		camera->setPosition(a);
 	}
 }
+
+void HelloWorld::itemMenuMove(float delta) {
+	auto cameraPos = camera->getPosition();
+	auto itemMenuPos = cameraPos + Vec2(0, -440);
+	itemMenu->setPosition(itemMenuPos);
+}
+
 void HelloWorld::playerWalk() {
-	if (left == true&&canmove) {
+	if (left == true && canmove) {
 		Location = false;
-		if ((playerState == 0 || playerState == -1 || playerState == 3 ||playerState == 4)&&!onxiepo) {
+		if ((playerState == 0 || playerState == -1 || playerState == 3 || playerState == 4) && !onxiepo) {
 			stopAnimate();
 			Animate* aWalk = Animate::create(pWalk);
 			aWalk->setTag(1);
@@ -643,26 +653,26 @@ void HelloWorld::playerWalk() {
 			playerState = 1;
 		}
 		if (onxiepo) {
-			if (playerState == 0 || playerState == -1 || playerState == 1||playerState == 3|| playerState == 4) {
-				if (rotation > 0&&playerState != 4) {
+			if (playerState == 0 || playerState == -1 || playerState == 1 || playerState == 3 || playerState == 4) {
+				if (rotation > 0 && playerState != 4) {
 					stopAnimate();
 					Animate* aupStair = Animate::create(pupStair);
 					aupStair->setTag(4);
 					player->runAction(aupStair);
 					playerState = 4;
 				}
-				else if (rotation< 0&&playerState != 3){
+				else if (rotation< 0 && playerState != 3) {
 					stopAnimate();
 					Animate* adownStair = Animate::create(pdownStair);
 					adownStair->setTag(3);
 					player->runAction(adownStair);
-					playerState = 3; 
+					playerState = 3;
 				}
 			}
 		}
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (speed.x >= 0) {
-			speed.x = -200*1.3;
+			speed.x = -200 * 1.3;
 
 		}
 		int haha = wallBesideLeft();
@@ -673,7 +683,7 @@ void HelloWorld::playerWalk() {
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 	}
-	else if (right == true&&canmove) {
+	else if (right == true && canmove) {
 		Location = true;
 		if ((playerState == 0 || playerState == -1 || playerState == 4 || playerState == 3) && !onxiepo) {
 			stopAnimate();
@@ -683,7 +693,7 @@ void HelloWorld::playerWalk() {
 			playerState = 1;
 		}
 		if (onxiepo) {
-			if (playerState == 0 || playerState == -1 || playerState == 1|| playerState == 4||playerState == 3) {
+			if (playerState == 0 || playerState == -1 || playerState == 1 || playerState == 4 || playerState == 3) {
 				if (rotation > 0 && playerState != 3) {
 					stopAnimate();
 					Animate* adownStair = Animate::create(pdownStair);
@@ -691,7 +701,7 @@ void HelloWorld::playerWalk() {
 					player->runAction(adownStair);
 					playerState = 3;
 				}
-				else if (rotation < 0&&playerState != 4) {
+				else if (rotation < 0 && playerState != 4) {
 					stopAnimate();
 					Animate* aupStair = Animate::create(pupStair);
 					aupStair->setTag(4);
@@ -702,7 +712,7 @@ void HelloWorld::playerWalk() {
 		}
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
 		if (speed.x <= 0) {
-			speed.x = 200*1.3;
+			speed.x = 200 * 1.3;
 		}
 		int haha = wallBesideRight();
 		if (haha == 1) {
@@ -716,7 +726,7 @@ void HelloWorld::playerWalk() {
 		speed.x = 0;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
-		if (playerState == 1|| playerState == -1 ||playerState == 3||playerState == 4) {
+		if (playerState == 1 || playerState == -1 || playerState == 3 || playerState == 4) {
 			stopAnimate();
 			Animate* aStand = Animate::create(pStand);
 			aStand->setTag(0);
@@ -728,7 +738,7 @@ void HelloWorld::playerWalk() {
 		if (up == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			//speed.x = 0;
-			speed.y = 200*1.3;
+			speed.y = 200 * 1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			if (playerState != 16) {
 				stopAnimate();
@@ -742,7 +752,7 @@ void HelloWorld::playerWalk() {
 		if (down == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			//speed.x = 0;
-			speed.y = -200*1.3;
+			speed.y = -200 * 1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			if (playerState != 16) {
 				stopAnimate();
@@ -756,7 +766,7 @@ void HelloWorld::playerWalk() {
 		if (up == down&&!standBy) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, 0));
-			
+
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, 0));
 		}
 	}
@@ -764,7 +774,7 @@ void HelloWorld::playerWalk() {
 		if (down == true) {
 			Vec2 speed = player->getPhysicsBody()->getVelocity();
 			speed.x = 0;
-			speed.y = -200*1.3;
+			speed.y = -200 * 1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		}
@@ -792,6 +802,13 @@ void HelloWorld::update(float dt)
 	{
 		m_world->step(1 / 360.0f);
 	}
+	auto a = player->getPosition() + Vec2(384.0, 66.0) + (!Location)*Vec2(-768, 0);
+	auto camearPos = camera->getPosition();
+	if (!cameramove) {
+		camera->setPosition(a);
+	}
+	auto itemMenuPos = camearPos + Vec2(0, -440);
+	itemMenu->setPosition(itemMenuPos);
 }
 void HelloWorld::changeLocation(float dt) {
 	if (Location != player->isFlippedX()) {
@@ -800,14 +817,15 @@ void HelloWorld::changeLocation(float dt) {
 				cameramove = false;
 				canmove = true;
 			});
-			auto a = player->getPosition() + Vec2(384.0, 216.0) + (!Location)*Vec2(-768, 0);
+			auto a = player->getPosition() + Vec2(384.0, 66) + (!Location)*Vec2(-768, 0);
 			auto moveto = MoveTo::create(0.5, a);
-			
+
 			auto action = Sequence::create(moveto, actionDone, NULL);
+			auto sineOut = EaseSineOut::create(action);
 			if (!jumping&&!droping) {
 				cameramove = true;
 				canmove = false;
-				camera->runAction(action);
+				camera->runAction(sineOut);
 			}
 
 		}
@@ -818,10 +836,11 @@ void HelloWorld::changeLocation(float dt) {
 			});
 			auto moveby = MoveBy::create(0.5, Vec2(-768, 0));
 			auto action = Sequence::create(moveby, actionDone, NULL);
+			auto sineOut = EaseSineOut::create(action);
 			if (!jumping&&!droping) {
 				cameramove = true;
 				canmove = false;
-				camera->runAction(action);
+				camera->runAction(sineOut);
 			}
 		}
 	}
@@ -831,7 +850,7 @@ void HelloWorld::drop() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_front_x = player->getPosition().x;
 	auto a = player->getContentSize();
-	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height/2)+5;
+	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height / 2) + 5;
 	unsigned int image_after_x = image_front_x + 40;
 	unsigned int image_after_y = image_front_y;
 	ccColor4B c_front = getPixelColorByPoint(Point(image_front_x, image_front_y));
@@ -839,10 +858,10 @@ void HelloWorld::drop() {
 	if (c_front.a == 0) {
 		droping = true;
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
-		speed.y = -250*1.3;
+		speed.y = -250 * 1.3;
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
-		if (playerState != 6&&!onxiepo) {
+		if (playerState != 6 && !onxiepo) {
 			Animate* afall = Animate::create(pfall);
 			stopAnimate();
 			afall->setTag(6);
@@ -862,7 +881,7 @@ void HelloWorld::drop() {
 				playerState = -1;
 				playingAction = false;
 			});
-			if (playerState != 7&&(playerState == 6||playerState == 5)) {
+			if (playerState != 7 && (playerState == 6 || playerState == 5)) {
 				Animate* arecovery = Animate::create(precovery);
 				auto action = Sequence::create(arecovery, actionMoveDone, NULL);
 				action->setTag(7);
@@ -882,8 +901,8 @@ void HelloWorld::fixPosition() {
 			(player->getPosition().y - player->getContentSize().height / 2);
 		ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
-		if (leftBottom.a == 255&&leftBottom.g < 100) {
-			speed.y = 200*1.3;
+		if (leftBottom.a == 255 && leftBottom.g < 100) {
+			speed.y = 200 * 1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			if (playerState == 5) {
@@ -896,11 +915,11 @@ void HelloWorld::fixPosition() {
 	unsigned int image_y = background->getContentSize().height -
 		(player->getPosition().y - player->getContentSize().height / 2);
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
-	leftBottom = getPixelColorByPoint(Point(image_x, image_y+20));
+	leftBottom = getPixelColorByPoint(Point(image_x, image_y + 20));
 }
 int HelloWorld::wallBesideLeft() {
 	Point playerPosition = player->getPosition();
-	unsigned int image_x = player->getPosition().x-10;
+	unsigned int image_x = player->getPosition().x - 10;
 	unsigned int image_y = background->getContentSize().height -
 		(player->getPosition().y - player->getContentSize().height / 2) - 10;
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
@@ -1001,7 +1020,7 @@ void HelloWorld::initAnimate() {
 	prthrow = loadAnimate("gifByPricness//003-throw.gif", 1, false);
 
 	dadstand = loadAnimate("gifByDad//001-stand.gif", -1, false);
-	dadtalk  = loadAnimate("gifByDad//002-talk.gif", 1, false);
+	dadtalk = loadAnimate("gifByDad//002-talk.gif", 1, false);
 	dadrun = loadAnimate("gifByDad//003-run.gif", -1, false);
 	dadstanby = loadAnimate("gifByDad//004-standby.gif", 1, false);
 	dadoutfire = loadAnimate("gifByDad//005-outfire.gif", -1, false);
@@ -1028,7 +1047,7 @@ Animation* HelloWorld::loadAnimate(string path, int times, bool back) {
 	GifAnimationDef* def = new GifAnimationDef;
 	def->loops = times;						// 循环次数
 	def->filePath = path;				// 文件路径
-	def->delayPerUnit = 1.0/30;			// 每帧间隔
+	def->delayPerUnit = 1.0 / 30;			// 每帧间隔
 	def->restoreOriginalFrame = back;	// 还原初始状态
 
 										// 创建动画
@@ -1059,7 +1078,7 @@ void HelloWorld::showItem(string Name) {
 	Sprite* item = Sprite::create(path);
 	tempitem = item;
 	item->setName(Name);
-	auto pos = player->getPosition() + Vec2(0,player->getContentSize().height / 2);
+	auto pos = player->getPosition() + Vec2(0, player->getContentSize().height / 2);
 	item->setPosition(pos);
 	m_UI_Game->addChild(item);
 	auto actionDone = CallFuncN::create([&](Ref* sender) {
@@ -1124,4 +1143,9 @@ void HelloWorld::actorPlayAction(Sprite* actor, Animation* paction, int actionnu
 	Animate* playerTempAction = Animate::create(paction);
 	playerTempAction->setTag(actionnum);
 	actor->runAction(playerTempAction);
+}
+
+void HelloWorld::initItemMenu() {
+	itemMenu = Sprite::create("UI//itemMenu.png");
+	m_UI_Tool->addChild(itemMenu, 1);
 }
