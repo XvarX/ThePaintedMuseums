@@ -6,6 +6,8 @@
 #include "Gif\InstantGif.h"
 #include "GifAnimation.h"
 #include <string>
+#include<vector>
+#include "Tool.h"
 USING_NS_CC;
 using namespace std;
 class Actor {
@@ -15,6 +17,7 @@ public:
 	int getActorNumber();
 	int getState();
 	void setState(int state);
+	bool actorCanMove();
 	Animation* initAnimationByName(string name, int times, bool back);
 	Animation* getActionStand();
 	Animation* getActionWalk();
@@ -24,6 +27,7 @@ private:
 	string Name;
 	int Number;
 	int state;
+	bool canMove;
 	Animation* stand;
 	Animation* walk;
 	Animation* talk;
@@ -55,6 +59,10 @@ private:
 class Player :public Actor {
 public:
 	Player(string ActorName, int ActorNumber);
+	int getHoldingToolsNum();
+	void turnHoldingTool(int location);//0向前，1向后
+	void addNewTool(Tool* newTool);
+	Tool* getHoldingTool();
 	Animation* getActionPlayerDownStair();
 	Animation* getActionPlayerUpStair();
 	Animation* getActionPlayerJump();
@@ -70,10 +78,12 @@ public:
 	Animation* getActionPlayerClimb();
 	Animation* getActionPlayerSearch();
 	Animation* getActionPlayerGet();
+	Animation* getActionPlayerFall();
 private:
 	Animation* playerDownStair;
 	Animation* playerUpStair;
 	Animation* playerJump;
+	Animation* playerFall;
 	Animation* playerRecovery;
 	Animation* playerNoIdea;
 	Animation* playerWindowOpen;
@@ -86,5 +96,8 @@ private:
 	Animation* playerClimb;
 	Animation* playerSearch;
 	Animation* playerGet;
+	vector<Tool*> toolHoldingVector;
+	Tool* HoldingTool;
+	int HoldingNum;
 };
 #endif

@@ -6,10 +6,13 @@ Actor::Actor(string ActorName, int ActorNumber) {
 	Name = ActorName;
 	Number = ActorNumber;
 	state = -1;
-
+	canMove = true;
 	stand = initAnimationByName("stand", -1, false);
 	walk = initAnimationByName("walk", -1, false);
 	talk = initAnimationByName("talk", 1, false);
+}
+bool Actor::actorCanMove() {
+	return canMove;
 }
 string Actor::getActorName() {
 	return Name;
@@ -72,9 +75,12 @@ Animation* Dad::getActionDadoutFire() {
 
 //Derived Player Class
 Player::Player(string ActorName, int ActorNumber) :Actor(ActorName, ActorNumber) {
+	HoldingTool = NULL;
+	HoldingNum = -1;
 	playerDownStair = initAnimationByName("playerDownStair", -1, false);
 	playerUpStair = initAnimationByName("playerUpStair", -1, false);
-	playerJump = initAnimationByName("playerJump", -1, false);
+	playerJump = initAnimationByName("playerJump", 1, false);
+	playerFall = initAnimationByName("playerFall", 1, false);
 	playerRecovery = initAnimationByName("playerRecovery", 1, false);
 	playerNoIdea = initAnimationByName("playerNoIdea", 1, false);
 	playerWindowOpen = initAnimationByName("playerWindowOpen", 1, false);
@@ -83,10 +89,10 @@ Player::Player(string ActorName, int ActorNumber) :Actor(ActorName, ActorNumber)
 	playerOilPour = initAnimationByName("playerOilPour", 1, false);
 	playerIgnite = initAnimationByName("playerIgnite", 1, false);
 	playerWheelTurn = initAnimationByName("playerWheelTurn", 1, false);
-	playerClimb = initAnimationByName("playerClimb", 1, false);
+	playerClimb = initAnimationByName("playerClimb", -1, false);
 	playerSearch = initAnimationByName("playerSearch", 1, false);
 	playerGet = initAnimationByName("playerGet", 1, false);
-
+	playerDoorOpen = initAnimationByName("playerDoorOpen", 1, false);
 }
 Animation* Player::getActionPlayerDownStair() {
 	return playerDownStair;
@@ -132,4 +138,44 @@ Animation* Player::getActionPlayerSearch() {
 }
 Animation* Player::getActionPlayerGet() {
 	return playerGet;
+}
+Animation* Player::getActionPlayerFall() {
+	return playerFall;
+}
+void Player::addNewTool(Tool* newTool) {
+	toolHoldingVector.push_back(newTool);
+	if (toolHoldingVector.size() == 1) {
+		HoldingTool = newTool;
+		HoldingNum = 0;
+	}
+}
+void Player::turnHoldingTool(int location) {
+	if (HoldingNum >= 0) {
+		if (location == 0) {
+			if (HoldingNum == 0) {
+				HoldingNum = toolHoldingVector.size()-1;
+				HoldingTool = toolHoldingVector[HoldingNum];
+			}
+			else {
+				HoldingNum--;
+				HoldingTool = toolHoldingVector[HoldingNum];
+			}
+		}
+		else if (location == 1) {
+			if (HoldingNum == toolHoldingVector.size() - 1) {
+				HoldingNum = 0;
+				HoldingTool = toolHoldingVector[HoldingNum];
+			}
+			else {
+				HoldingNum++;
+				HoldingTool = toolHoldingVector[HoldingNum];
+			}
+		}
+	}
+}
+int Player::getHoldingToolsNum() {
+	return toolHoldingVector.size();
+}
+Tool* Player::getHoldingTool() {
+	return HoldingTool;
 }

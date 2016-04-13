@@ -31,9 +31,11 @@ Scene* HelloWorld::createScene()
 }
 
 void HelloWorld::setScene() {
+	//set the background
 	background = Sprite::create("background03-20.jpg");
 	background->setPosition(background->getContentSize() / 2);
 
+	//set the jugement background
 	Image* backgroundImage = new Image();
 	backgroundImage->initWithImageFile("background1_1_1in.png");
 	c_data = backgroundImage->getData();
@@ -42,25 +44,22 @@ void HelloWorld::setScene() {
 }
 
 void HelloWorld::setGame() {
-	//player set
-	//player = Sprite::create("player.png", CCRectMake(35, 15, 240, 290));
-
-	// 创建精灵播放动画
-	player = Sprite::create("player1.png");
 	player->setAnchorPoint(Vec2(0.514, 0.5));
-	Animate* aStand = Animate::create(pStand);
-	aStand->setTag(0);
-	player->runAction(aStand);
+
+	//init player animation, play stand
+	auto playerActionStand = ((Player*)player->getUserData())->getActionStand();
+	actorContinuousAction(player, playerActionStand, 0);
+
+	//初始方向朝左
 	player->runAction(FlipX::create(true));
-	//player->setScale(0.5);
-	auto a = player->getContentSize();
-	princess = Sprite::create("princess.png");
 	princess->setName("princess");
-	//contactor set
-	auto backgroundterm = static_cast<Sprite*>(rootNode->getChildByName("background1_1out"));
-	backgroundterm->removeFromParentAndCleanup(true);
+	//去掉studio中的背景
+	auto backgroundTemp = static_cast<Sprite*>(rootNode->getChildByName("background1_1out"));
+	backgroundTemp->removeFromParentAndCleanup(true);
+	//添加studio中的对象物体
 	auto Contact = rootNode->getChildByName("Contact");
 	contactVector = Contact->getChildren();
+
 	auto Event = rootNode->getChildByName("Event");
 	eventVector = Event->getChildren();
 	for (int i = 0; i < eventVector.size(); i++) {
@@ -68,21 +67,20 @@ void HelloWorld::setGame() {
 		Construct *newObject = new Construct(projectile->getName(), i);
 		projectile->setUserData(newObject);
 	}
+
 	auto Door = rootNode->getChildByName("Door");
 	doorsVector = Door->getChildren();
+
 	auto Object = rootNode->getChildByName("Object");
 	objectsVector = Object->getChildren();
-	auto uselessObject = rootNode->getChildByName("UselessObject");
-	uselessObjectsVector = uselessObject->getChildren();
-	auto Stair = rootNode->getChildByName("Stair");
-
-	stairsVector = Stair->getChildren();
 	for (int i = 0; i < objectsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)objectsVector.at(i);
 		Construct *newObject = new Construct(projectile->getName(), i);
 		projectile->setUserData(newObject);
 	}
 
+	auto uselessObject = rootNode->getChildByName("UselessObject");
+	uselessObjectsVector = uselessObject->getChildren();
 	for (int i = 0; i < uselessObjectsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)uselessObjectsVector.at(i);
 		ObjectMy *newObject;
@@ -95,6 +93,8 @@ void HelloWorld::setGame() {
 		projectile->setUserData(newObject);
 	}
 
+	auto Stair = rootNode->getChildByName("Stair");
+	stairsVector = Stair->getChildren();
 	for (int i = 0; i < stairsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)stairsVector.at(i);
 		Construct *newObject = new Construct(projectile->getName(), i);
@@ -103,6 +103,7 @@ void HelloWorld::setGame() {
 		}
 		projectile->setUserData(newObject);
 	}
+
 	auto StandBy = rootNode->getChildByName("StandBy");
 	StandBysVector = StandBy->getChildren();
 
@@ -116,7 +117,8 @@ void HelloWorld::setGame() {
 	setPlayerPositionByZone(princess, zone002);
 	camera = Sprite::create("camera.jpg");
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
-	player->setPosition(Vec2(4800, 3200));
+	//player->setPosition(Vec2(4800, 3200));
+
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
@@ -124,7 +126,7 @@ void HelloWorld::setGame() {
 }
 
 void HelloWorld::configPhy() {
-	//init door
+	//init door physicsbody
 	for (int i = 0; i < doorsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)doorsVector.at(i);
 		projectile->setVisible(false);
@@ -136,8 +138,7 @@ void HelloWorld::configPhy() {
 		projectile->setPhysicsBody(doorBody);
 	}
 
-
-	//physics edge init
+	//init edge physicsbody
 	auto body = PhysicsBody::createEdgeBox(background->getContentSize(), PHYSICSBODY_MATERIAL_DEFAULT, 3);
 	auto edgeNode = Node::create();
 	body->setGravityEnable(true);
@@ -145,20 +146,21 @@ void HelloWorld::configPhy() {
 	edgeNode->setPhysicsBody(body);
 	this->addChild(edgeNode);
 
-	//physics player init
-	PhysicsMaterial material;
+	//init player physicsbody
 	auto playerBody = PhysicsBody::createBox(Size(26, 313));
-
 	playerBody->setRotationEnable(false);
 	playerBody->setGravityEnable(false);
 	player->setPhysicsBody(playerBody);
 
+	//init camera physicsbody
+	auto cameraBody = PhysicsBody::create();
+	cameraBody->setGravityEnable(false);
+	camera->setPhysicsBody(cameraBody);
+
 	//physics background init
-	auto backgroundBody = PhysicsBody::createBox(Size(0, 0), PhysicsMaterial::PhysicsMaterial(0, 0, 0));
+	/*auto backgroundBody = PhysicsBody::createBox(Size(0, 0), PhysicsMaterial::PhysicsMaterial(0, 0, 0));
 	backgroundBody->setGravityEnable(false);
 	backgroundBody->setDynamic(false);
-
-	//plist
 	const char* testPlistPath = "museum2.plist";
 	CCDictionary* plistDic = CCDictionary::createWithContentsOfFile(testPlistPath);
 	CCDictionary* bodyDic = dynamic_cast<CCDictionary*>(plistDic->objectForKey("bodies"));
@@ -179,20 +181,15 @@ void HelloWorld::configPhy() {
 			}
 			backgroundBody->addShape(PhysicsShapePolygon::create(points, num));
 		}
-	}
-	auto cameraBody = PhysicsBody::create();
-	cameraBody->setGravityEnable(false);
-	camera->setPhysicsBody(cameraBody);
+	}*/
 }
 
 void HelloWorld::configSchedule() {
 	//fix update to avoid body pass through
 	scheduleOnce(CC_SCHEDULE_SELECTOR(HelloWorld::updateStart), 2);
-
 	//playerMove schedule
 	schedule(schedule_selector(HelloWorld::playerMove), 1.0 / 60, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::changeLocation), 1.0 / 120, kRepeatForever, 0);
-
 	schedule(schedule_selector(HelloWorld::conTact), 1.0 / 60, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::canMove), 1.0 / 60, kRepeatForever, 0);
 	//schedule(schedule_selector(HelloWorld::cameraMove), 1.0 / 60, kRepeatForever, 0);
@@ -205,9 +202,8 @@ void HelloWorld::configEventListener() {
 	keylistener->onKeyPressed = CC_CALLBACK_2(HelloWorld::onKeyPressed, this);
 	keylistener->onKeyReleased = CC_CALLBACK_2(HelloWorld::onKeyReleased, this);
 	_eventDispatcher->addEventListenerWithFixedPriority(keylistener, -100);
-	stairBlue = getPixelColorByPoint(Point(7512, 3892));
 }
-// on "init" you need to initialize your instance
+
 bool HelloWorld::initLayer() {
 	auto origin = Director::getInstance()->getVisibleOrigin();
 	m_UI_Dialog = Layer::create();
@@ -225,13 +221,13 @@ bool HelloWorld::initLayer() {
 	m_UI_Background = Layer::create();
 	m_UI_Background->setPosition(origin);
 	this->addChild(m_UI_Background, 10);
-
 	return true;
 }
 
 void HelloWorld::initDialog() {
 
 }
+
 bool HelloWorld::init()
 {
 	if (!Layer::init())
@@ -251,10 +247,14 @@ bool HelloWorld::init()
 	canmove = true;
 	Location = false;
 	playingAction = false;
+	changingTool = false;
 	rootNode = CSLoader::createNode("MainScene.csb");
+	CCSpriteFrameCache *pFrameCache = CCSpriteFrameCache::sharedSpriteFrameCache();
+	pFrameCache->addSpriteFramesWithFile("UI//Plist2.plist");
 	initLayer();
 	initAnimate();
 	initItemMenu();
+	initActor();
 	setScene();
 	setGame();
 	configPhy();
@@ -268,6 +268,7 @@ bool HelloWorld::init()
 	//event listener
 	return true;
 }
+
 void HelloWorld::onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
 	if (keyCode == EventKeyboard::KeyCode::KEY_A) {
 		left = false;
@@ -282,7 +283,28 @@ void HelloWorld::onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* e
 		down = false;
 	}
 }
+
 void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
+	if (keyCode == EventKeyboard::KeyCode::KEY_Q) {
+		if (!changingTool) {
+			auto playerdata = (Player*)player->getUserData();
+			playerdata->turnHoldingTool(0);
+			auto tool = playerdata->getHoldingTool();
+			if (tool != NULL) {
+				showTool(tool->getToolName());
+			}
+		}
+	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_E) {
+		if (!changingTool) {
+			auto playerdata = (Player*)player->getUserData();
+			playerdata->turnHoldingTool(1);
+			auto tool = playerdata->getHoldingTool();
+			if (tool != NULL) {
+				showTool(tool->getToolName());
+			}
+		}
+	}
 	if (keyCode == EventKeyboard::KeyCode::KEY_A) {
 		left = true;
 	}
@@ -298,14 +320,11 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			if (!jumping&&!droping && (!onStair || standBy)) {
 				jumping = true;
 				auto jumpBy = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
-				auto jumpbb = JumpBy::create(0.5, Vec2(0, 200), 0, 1);
 				auto action = Sequence::create(jumpBy, actionMoveDone, NULL);
 				player->runAction(action);
-				//camera->runAction(jumpbb);
-				Animate* ajump = Animate::create(pjump);
-				stopAnimate();
-				ajump->setTag(5);
-				player->runAction(ajump);
+
+				auto playerActionJump = ((Player*)player->getUserData())->getActionPlayerJump();
+				actorContinuousAction(player, playerActionJump, 5);
 				playerState = 5;
 			}
 			if (onStair) {
@@ -327,16 +346,25 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					player->addChild(projectile);
 					itemsVectorInPlayer.pushBack(projectile);
 					showItem(projectile->getName());
-					playerAction(pget, 18);
+					playerGetTool(projectile);
+					auto playerActionGet= ((Player*)player->getUserData())->getActionPlayerGet();
+					playerAction(playerActionGet, 18);
+					playerState = 18;
+
+					auto PlayerData = (Player*)player->getUserData();
+					auto Tool = CCSprite::createWithSpriteFrameName("UI/" + projectile->getName() + ".png");
+					Tool->setPosition(Vec2(505 + ((PlayerData->getHoldingToolsNum() - 1) * 130), 80));
+					itemMenu->addChild(Tool);
 				}
 			}
 		}
 
 		for (int i = 0; i < objectsVector.size(); i++) {
 			Sprite *projectile = (CCSprite *)objectsVector.at(i);
+			auto HoldingToolName = ((Player*)player->getUserData())->getHoldingTool()->getToolName();
 			if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
 				if (projectile->getName() == "Object001") {
-					if (player->getChildByName("hairpin") != NULL) {
+					if (HoldingToolName == "hairpin") {
 						auto object = (Construct*)projectile->getUserData();
 						if (object->getState() != -1) {
 							object->setState(-1);
@@ -346,13 +374,15 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 
 							princess->runAction(MoveTo::create(5.0, Point(posZone4->getPosition().x, princess->getPosition().y)));
 
-							playerAction(popenWindow, 9);
+							auto playerActionOpenWindow = ((Player*)player->getUserData())->getActionPlayerWindowOpen();
+							playerAction(playerActionOpenWindow, 9);
 						}
 					}
 					else {
 						auto object = (Construct*)projectile->getUserData();
 						if (object->getState() != -1) {
-							playerAction(pnoidea, 8);
+							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
+							playerAction(playerActionNoidea, 8);
 						}
 					}
 				}
@@ -361,7 +391,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					if (object->getState() != -1) {
 						object->setState(-1);
 						//addNewItem("umbrella", Point(4640, 1801), 2291, 926, 155, 155);
-						playerAction(psearch, 17, "umbrella");
+						auto playerActionSearch = ((Player*)player->getUserData())->getActionPlayerSearch();
+						playerAction(playerActionSearch, 17, "umbrella");
 					}
 				}
 				if (projectile->getName() == "Object009") {
@@ -370,23 +401,26 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						object->setState(-1);
 						int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
 						//addNewItem("bucket", Point(5250, y), 2520, 926, 155, 155);
-						playerAction(psearch, 17, "bucket");
+						auto playerActionSearch = ((Player*)player->getUserData())->getActionPlayerSearch();
+						playerAction(playerActionSearch, 17, "bucket");
 					}
 				}
 				if (projectile->getName() == "Object012") {
 					auto object = (Construct*)projectile->getUserData();
 					if (object->getState() != -1) {
-						if (player->getChildByName("umbrella") != NULL) {
+						if (HoldingToolName == "umbrella") {
 							object->setState(-1);
 							//play
 							Sprite *stair02 = (CCSprite *)rootNode->getChildByName("Stair")->getChildByName("Stair02");
 							auto eventobject = (Construct*)stair02->getUserData();
 							eventobject->setState(0);
 							kailouti = true;
-							playerAction(patticopen, 10);
+							auto playerActionAtticOpen = ((Player*)player->getUserData())->getActionPlayerAtticOpen();
+							playerAction(playerActionAtticOpen, 10);
 						}
 						else {
-							playerAction(pnoidea, 8);
+							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
+							playerAction(playerActionNoidea, 8);
 						}
 					}
 				}
@@ -396,7 +430,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						object->setState(-1);
 						int y = 2454 - projectile->getContentSize().height / 2 + 155 / 2;
 						//addNewItem("oilbucket", Point(6680, 5158), 2071, 1127, 155, 155);
-						playerAction(psearch, 17, "oilbucket");
+						auto playerActionSearch = ((Player*)player->getUserData())->getActionPlayerSearch();
+						playerAction(playerActionSearch, 17, "oilbucket");
 						projectile->setVisible(false);
 
 					}
@@ -404,13 +439,15 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				if (projectile->getName() == "Object015") {
 					auto object = (Construct*)projectile->getUserData();
 					if (object->getState() != -1) {
-						if (player->getChildByName("bucket") != NULL) {
+						if (HoldingToolName == "bucket") {
 							object->setState(-1);
 							rootNode->getChildByName("Door")->removeChildByName("Door002");
-							playerAction(poutfire, 11);
+							auto playerActionOutFire = ((Player*)player->getUserData())->getActionPlayerOutFire();
+							playerAction(playerActionOutFire, 11);
 						}
 						else {
-							playerAction(pnoidea, 8);
+							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
+							playerAction(playerActionNoidea, 8);
 						}
 					}
 				}
@@ -419,26 +456,30 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					if (object->getState() != -1) {
 						object->setState(-1);
 						//addNewItem("roomKey", projectile->getPosition(), 2290, 1127, 155, 155);
-						playerAction(psearch, 17, "roomKey");
+						auto playerActionSearch = ((Player*)player->getUserData())->getActionPlayerSearch();
+						playerAction(playerActionSearch, 17, "roomKey");
 					}
 				}
 				if (projectile->getName() == "Object020") {
 					auto object = (Construct*)projectile->getUserData();
 					if (object->getState() != -1) {
-						if (player->getChildByName("roomKey") != NULL) {
+						if (HoldingToolName=="roomKey") {
 							object->setState(-1);
 							//play
 							rootNode->getChildByName("Door")->removeChildByName("Door004");
-							dad = Sprite::create("dad.png");
+							
 							dad->setName("dad");
 							auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
 							m_UI_Game->addChild(dad);
 							setPlayerPositionByZone(dad, zone006);
 							actorPlayAction(dad, dadstand, 1);
-							playerAction(pdooropen, 12);
+
+							auto playerActionDoorOpen = ((Player*)player->getUserData())->getActionPlayerDoorOpen();
+							playerAction(playerActionDoorOpen, 12);
 						}
 						else {
-							playerAction(pnoidea, 8);
+							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
+							playerAction(playerActionNoidea, 8);
 						}
 					}
 				}
@@ -447,24 +488,27 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					if (object->getState() != -1) {
 						object->setState(-1);
 						//addNewItem("match", projectile->getPosition(), 2520, 1127, 155, 155);
-						playerAction(psearch, 17, "match");
+						auto playerActionSearch = ((Player*)player->getUserData())->getActionPlayerSearch();
+						playerAction(playerActionSearch, 17, "match");
 					}
 				}
 				if (projectile->getName() == "Object025") {
 					auto object = (Construct*)projectile->getUserData();
 					if (object->getState() != -1) {
 						if (object->getState() == 0) {
-							if (player->getChildByName("oilbucket") != NULL) {
+							if (HoldingToolName == "oilbucket") {
 								object->setState(1);
 								//play
-								playerAction(poilthrow, 13);
+								auto playerActionOilPour = ((Player*)player->getUserData())->getActionPlayerOilPour();
+								playerAction(playerActionOilPour, 13);
 							}
 							else {
-								playerAction(pnoidea, 8);
+								auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
+								playerAction(playerActionNoidea, 8);
 							}
 						}
 						else if (object->getState() == 1) {
-							if (player->getChildByName("match") != NULL) {
+							if (HoldingToolName == "match") {
 								Sprite *event008 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event008");
 								auto eventobject = (Construct*)event008->getUserData();
 								eventobject->setState(1);
@@ -473,20 +517,23 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								auto posZone7 = rootNode->getChildByName("Zone")->getChildByName("Zone007");
 
 								dad->stopAllActions();
-								Animate* dadAction1 = Animate::create(dadstanby);
-								Animate* dadAction2 = Animate::create(dadrun);
+								Animate* dadAction1 = Animate::create(((Dad*)dad->getUserData())->getActionDadStandBy());
+								Animate* dadAction2 = Animate::create(((Dad*)dad->getUserData())->getActionWalk());
 								dad->setFlippedX(true);
 								dad->runAction(Sequence::create(dadAction1, dadAction2, NULL));
 								auto move = MoveTo::create(5.0, Point(posZone7->getPosition().x, dad->getPosition().y));
 								auto moveDone = CallFuncN::create([&](Ref* sender) {
-									actorPlayAction(dad, dadoutfire, 5);
+									actorPlayAction(dad, ((Dad*)dad->getUserData())->getActionDadoutFire(), 5);
 								});
 								auto dadaction = Sequence::create(move, moveDone, NULL);
 								dad->runAction(dadaction);
-								playerAction(pfire, 14);
+
+								auto playerActionIgnite = ((Player*)player->getUserData())->getActionPlayerIgnite();
+								playerAction(playerActionIgnite, 14);
 							}
 							else {
-								playerAction(pnoidea, 8);
+								auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
+								playerAction(playerActionNoidea, 8);
 							}
 						}
 					}
@@ -646,26 +693,20 @@ void HelloWorld::playerWalk() {
 	if (left == true && canmove) {
 		Location = false;
 		if ((playerState == 0 || playerState == -1 || playerState == 3 || playerState == 4) && !onxiepo) {
-			stopAnimate();
-			Animate* aWalk = Animate::create(pWalk);
-			aWalk->setTag(1);
-			player->runAction(aWalk);
+			auto playerActionWalk = ((Player*)player->getUserData())->getActionWalk();
+			actorContinuousAction(player, playerActionWalk, 1);
 			playerState = 1;
 		}
 		if (onxiepo) {
 			if (playerState == 0 || playerState == -1 || playerState == 1 || playerState == 3 || playerState == 4) {
 				if (rotation > 0 && playerState != 4) {
-					stopAnimate();
-					Animate* aupStair = Animate::create(pupStair);
-					aupStair->setTag(4);
-					player->runAction(aupStair);
+					auto playerActionUpStair = ((Player*)player->getUserData())->getActionPlayerUpStair();
+					actorContinuousAction(player, playerActionUpStair, 4);
 					playerState = 4;
 				}
 				else if (rotation< 0 && playerState != 3) {
-					stopAnimate();
-					Animate* adownStair = Animate::create(pdownStair);
-					adownStair->setTag(3);
-					player->runAction(adownStair);
+					auto playerActionDownStair = ((Player*)player->getUserData())->getActionPlayerDownStair();
+					actorContinuousAction(player, playerActionDownStair, 3);
 					playerState = 3;
 				}
 			}
@@ -686,26 +727,20 @@ void HelloWorld::playerWalk() {
 	else if (right == true && canmove) {
 		Location = true;
 		if ((playerState == 0 || playerState == -1 || playerState == 4 || playerState == 3) && !onxiepo) {
-			stopAnimate();
-			Animate* aWalk = Animate::create(pWalk);
-			aWalk->setTag(1);
-			player->runAction(aWalk);
+			auto playerActionWalk = ((Player*)player->getUserData())->getActionWalk();
+			actorContinuousAction(player, playerActionWalk, 1);
 			playerState = 1;
 		}
 		if (onxiepo) {
 			if (playerState == 0 || playerState == -1 || playerState == 1 || playerState == 4 || playerState == 3) {
 				if (rotation > 0 && playerState != 3) {
-					stopAnimate();
-					Animate* adownStair = Animate::create(pdownStair);
-					adownStair->setTag(3);
-					player->runAction(adownStair);
+					auto playerActionDownStair = ((Player*)player->getUserData())->getActionPlayerDownStair();
+					actorContinuousAction(player, playerActionDownStair, 3);
 					playerState = 3;
 				}
 				else if (rotation < 0 && playerState != 4) {
-					stopAnimate();
-					Animate* aupStair = Animate::create(pupStair);
-					aupStair->setTag(4);
-					player->runAction(aupStair);
+					auto playerActionUpStair = ((Player*)player->getUserData())->getActionPlayerUpStair();
+					actorContinuousAction(player, playerActionUpStair, 4);
 					playerState = 4;
 				}
 			}
@@ -727,10 +762,8 @@ void HelloWorld::playerWalk() {
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		if (playerState == 1 || playerState == -1 || playerState == 3 || playerState == 4) {
-			stopAnimate();
-			Animate* aStand = Animate::create(pStand);
-			aStand->setTag(0);
-			player->runAction(aStand);
+			auto playerActionStand = ((Player*)player->getUserData())->getActionStand();
+			actorContinuousAction(player, playerActionStand, 0);
 			playerState = 0;
 		}
 	}
@@ -741,10 +774,8 @@ void HelloWorld::playerWalk() {
 			speed.y = 200 * 1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			if (playerState != 16) {
-				stopAnimate();
-				Animate* aclimb = Animate::create(pclimb);
-				aclimb->setTag(16);
-				player->runAction(aclimb);
+				auto playerActionClimb = ((Player*)player->getUserData())->getActionPlayerClimb();
+				actorContinuousAction(player, playerActionClimb, 16);
 				playerState = 16;
 			}
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
@@ -755,10 +786,8 @@ void HelloWorld::playerWalk() {
 			speed.y = -200 * 1.3;
 			player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 			if (playerState != 16) {
-				stopAnimate();
-				Animate* aclimb = Animate::create(pclimb);
-				aclimb->setTag(16);
-				player->runAction(aclimb);
+				auto playerActionClimb = ((Player*)player->getUserData())->getActionPlayerClimb();
+				actorContinuousAction(player, playerActionClimb, 16);
 				playerState = 16;
 			}
 			//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
@@ -862,10 +891,8 @@ void HelloWorld::drop() {
 		player->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		if (playerState != 6 && !onxiepo) {
-			Animate* afall = Animate::create(pfall);
-			stopAnimate();
-			afall->setTag(6);
-			player->runAction(afall);
+			auto playerActionFall = ((Player*)player->getUserData())->getActionPlayerFall();
+			actorContinuousAction(player, playerActionFall, 6);
 			playerState = 6;
 		}
 	}
@@ -876,17 +903,9 @@ void HelloWorld::drop() {
 		//camera->getPhysicsBody()->setVelocity(Vec2(speed.x, speed.y));
 		if (droping == true) {
 			droping = false;
-			auto actionMoveDone = CallFuncN::create([&](Ref* sender) {
-				stopAnimate();
-				playerState = -1;
-				playingAction = false;
-			});
 			if (playerState != 7 && (playerState == 6 || playerState == 5)) {
-				Animate* arecovery = Animate::create(precovery);
-				auto action = Sequence::create(arecovery, actionMoveDone, NULL);
-				action->setTag(7);
-				player->runAction(action);
-				playingAction = true;
+				auto playerActionRecovery = ((Player*)player->getUserData())->getActionPlayerRecovery();
+				actorSingleAction(player, playerActionRecovery, 7);
 				playerState = 7;
 			}
 		}
@@ -992,7 +1011,7 @@ void HelloWorld::setPlayerPositionByZone(Sprite* player, Node* zone) {
 }
 
 void HelloWorld::initAnimate() {
-	ptemp = loadAnimate("playertemp.gif", 1, false);
+	/*ptemp = loadAnimate("playertemp.gif", 1, false);
 	princessStand = loadAnimate("pricness.gif", -1, false);
 	princessTemp = loadAnimate("temp.gif", 1, false);
 	pStand = loadAnimate("gif//000-stand.gif", -1, false);
@@ -1012,7 +1031,7 @@ void HelloWorld::initAnimate() {
 	pturn = loadAnimate("gif//015-turn.gif", 1, false);
 	pclimb = loadAnimate("gif//016-climb.gif", -1, false);
 	pget = loadAnimate("gif//018-get.gif", 1, false);
-	psearch = loadAnimate("gif//017-search.gif", 1, false);
+	psearch = loadAnimate("gif//017-search.gif", 1, false);*/
 
 	prstand = loadAnimate("gifByPricness//000-stand.gif", -1, false);
 	prkao = loadAnimate("gifByPricness//001-kao.gif", 1, false);
@@ -1058,6 +1077,7 @@ void HelloWorld::stopAnimate() {
 	for (int i = 0; i <= 18; i++) {
 		player->stopActionByTag(i);
 	}
+	playerState = -1;
 }
 void HelloWorld::playerAction(Animation* paction, int i) {
 	auto actionDone = CallFuncN::create([&](Ref* sender) {
@@ -1072,6 +1092,7 @@ void HelloWorld::playerAction(Animation* paction, int i) {
 	auto action = Sequence::create(playerTempAction, actionDone, NULL);
 	action->setTag(i);
 	player->runAction(action);
+	playerState = i;
 }
 void HelloWorld::showItem(string Name) {
 	string path = "item//" + Name + ".png";
@@ -1092,6 +1113,23 @@ void HelloWorld::showItem(string Name) {
 	auto action = Sequence::create(delay, actionDone, NULL);
 	item->runAction(action);
 }
+void HelloWorld::showTool(string Name) {
+	string path = "item//" + Name + ".png";
+	Sprite* item = Sprite::create(path);
+	tempitem = item;
+	item->setName(Name);
+	auto pos = player->getPosition() + Vec2(0, player->getContentSize().height / 2);
+	item->setPosition(pos);
+	m_UI_Game->addChild(item);
+	auto actionDone = CallFuncN::create([&](Ref* sender) {
+		changingTool = false;
+		((Sprite*)sender)->removeFromParent();
+	});
+	auto delay = DelayTime::create(0.5);
+	auto action = Sequence::create(delay, actionDone, NULL);
+	changingTool = true;
+	item->runAction(action);
+}
 void HelloWorld::playerAction(Animation* paction, int i, string Name) {
 	auto actionDone = CallFuncN::create([&](Ref* sender) {
 		stopAnimate();
@@ -1099,8 +1137,17 @@ void HelloWorld::playerAction(Animation* paction, int i, string Name) {
 			canmove = true;
 			stopAnimate();
 			playerState = -1;
+			auto tempSprite = Sprite::create();
+			tempSprite->setName(itemName);
+			playerGetTool(tempSprite);
+			auto PlayerData = (Player*)player->getUserData();
+			auto Tool = CCSprite::createWithSpriteFrameName("UI/" + tempSprite->getName() + ".png");
+			Tool->setPosition(Vec2(505+((PlayerData->getHoldingToolsNum()-1)*130), 80));
+			itemMenu->addChild(Tool);
+			
 		});
-		Animate* getAction = Animate::create(pget);
+		auto PlayerActionGet = ((Player*)player->getUserData())->getActionPlayerGet();
+		Animate* getAction = Animate::create(PlayerActionGet);
 		auto allaction = Sequence::create(getAction, getactionDone, NULL);
 		player->runAction(allaction);
 		showItem(itemName);
@@ -1146,6 +1193,58 @@ void HelloWorld::actorPlayAction(Sprite* actor, Animation* paction, int actionnu
 }
 
 void HelloWorld::initItemMenu() {
-	itemMenu = Sprite::create("UI//itemMenu.png");
+	itemMenu = CCSprite::createWithSpriteFrameName("UI/toolMenu.png");
+	/*auto test = CCSprite::createWithSpriteFrameName("UI/roomKey.png");
+	test->setPosition(Vec2(505, 80));
+	itemMenu->addChild(test,60);*/
 	m_UI_Tool->addChild(itemMenu, 1);
+}
+
+void HelloWorld::initActor() {
+	player = Sprite::create("player1.png");
+	princess = Sprite::create("princess.png");
+	dad = Sprite::create("dad.png");
+
+	Player* newPlayer = new Player("Player", 0);
+	Princess* newPrincess = new Princess("Princess", 1);
+	Dad* newDad = new Dad("Dad", 2);
+	player->setUserData(newPlayer);
+	princess->setUserData(newPrincess);
+	dad->setUserData(newDad);
+}
+
+void HelloWorld::actorSingleAction(Sprite* actor, Animation* action, int actionnum) {
+	auto actionDone = CallFuncN::create([&](Ref* sender) {
+		canmove = true;
+		stopAnimate();
+		kailouti = false;
+		playerState = -1;
+	});
+	canmove = false;
+	stopAnimate();
+	Animate* playerTempAction = Animate::create(action);
+	auto allAction = Sequence::create(playerTempAction, actionDone, NULL);
+	allAction->setTag(actionnum);
+	actor->runAction(allAction);
+	auto actorData = (Actor*)actor->getUserData();
+	actorData->setState(actionnum);
+}
+
+void HelloWorld::actorContinuousAction(Sprite* actor, Animation* action, int actionnum) {
+	if (actor == player) {
+		stopAnimate();
+	}
+	Animate* aAction = Animate::create(action);
+	aAction->setTag(actionnum);
+	actor->runAction(aAction);
+	auto actorData = (Actor*)actor->getUserData();
+	actorData->setState(actionnum);
+}
+void HelloWorld::playerGetTool(Sprite* tool) {
+	auto playerData = (Player*)player->getUserData();
+	int num = playerData->getHoldingToolsNum();
+	num++;
+	string name = tool->getName();
+	Tool* newTool = new Tool(num, name);
+	playerData->addNewTool(newTool);
 }

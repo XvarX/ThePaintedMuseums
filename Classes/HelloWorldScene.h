@@ -18,6 +18,7 @@ public:
 
     // Here's a difference. Method 'init' in cocos2d-x returns bool, instead of returning 'id' in cocos2d-iphone
     virtual bool init();
+	void playerGetTool(Sprite* tool);
 	void update(float dt) override;
 	void setScene();
 	void setGame();
@@ -25,6 +26,7 @@ public:
 	void configSchedule();
 	void configEventListener();
 	bool initLayer();
+	void initActor();
 	void initDialog();
 	void initItemMenu();
 	void stopAnimate();
@@ -42,6 +44,9 @@ public:
 	void playerMove(float delta);
 	void actorPlayAction(Sprite* actor, Animation* paction, int actionnum);
 
+	void actorContinuousAction(Sprite* actor, Animation* action, int actionnum);
+	void actorSingleAction(Sprite* actor, Animation* action, int actionnum);
+
 	void princesscomming();
 	void cameraMove(float delta);
 	void cameraMoveLeft(float delta);
@@ -50,6 +55,7 @@ public:
 	void playerAction();
 	void canMove(float delta);
 	void showItem(string ItemName);
+	void showTool(string ItemName);
 	void changeLocation(float delta);
 	void addNewItem(string itemName, Point ItemPos, int a, int b, int c, int d);
 	void fixPosition();
@@ -81,6 +87,7 @@ private:
 	bool onStair;
 	bool onxiepo;
 	bool standBy;
+	bool changingTool;
 	bool Location; // false = left  right = true
 	float rotation;
 	bool playingAction;
