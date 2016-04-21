@@ -2,13 +2,13 @@
 #include "cocostudio/CocoStudio.h"
 #include "ui/CocosGUI.h"
 #include "GifAnimation.h"
-#include "popScence.h"
 #include "ObjectMy.h"
 #include "math\CCMath.h"
 #include "Construct.h"
 #include <math.h>
 #include "HelloWorlD.h"
 #include "Actor.h"
+#include"PopScene.h"
 
 USING_NS_CC;
 
@@ -18,7 +18,6 @@ Scene* HelloWorld::createScene()
 {
 	// 'scene' is an autorelease object
 	auto scene = Scene::createWithPhysics();
-	scene->getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
 
 	auto layer = HelloWorld::create();
 	layer->setPhyWorld(scene->getPhysicsWorld());
@@ -103,13 +102,18 @@ void HelloWorld::setGame() {
 		}
 		projectile->setUserData(newObject);
 	}
+	Stair->setVisible(false);
 
 	auto StandBy = rootNode->getChildByName("StandBy");
 	StandBysVector = StandBy->getChildren();
+	StandBy->setVisible(false);
 
 	auto Xiepo = rootNode->getChildByName("Xiepo");
 	XieposVector = Xiepo->getChildren();
-
+	Xiepo->setVisible(false);
+	
+	auto Zone = rootNode->getChildByName("Zone");
+	Zone->setVisible(false);
 	//init position
 	auto zone001 = rootNode->getChildByName("Zone")->getChildByName("Zone001");
 	auto zone002 = rootNode->getChildByName("Zone")->getChildByName("Zone002");
@@ -117,11 +121,12 @@ void HelloWorld::setGame() {
 	setPlayerPositionByZone(princess, zone002);
 	camera = Sprite::create("camera.jpg");
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
-	//player->setPosition(Vec2(4800, 3200));
+	//player->setPosition(Vec2(7100, 4000));
 
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
+	m_UI_Game->addChild(dad);
 	m_UI_Game->addChild(camera);
 }
 
@@ -156,7 +161,7 @@ void HelloWorld::configPhy() {
 	auto cameraBody = PhysicsBody::create();
 	cameraBody->setGravityEnable(false);
 	camera->setPhysicsBody(cameraBody);
-
+	camera->setVisible(false);
 	//physics background init
 	/*auto backgroundBody = PhysicsBody::createBox(Size(0, 0), PhysicsMaterial::PhysicsMaterial(0, 0, 0));
 	backgroundBody->setGravityEnable(false);
@@ -192,6 +197,7 @@ void HelloWorld::configSchedule() {
 	schedule(schedule_selector(HelloWorld::changeLocation), 1.0 / 120, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::conTact), 1.0 / 60, kRepeatForever, 0);
 	schedule(schedule_selector(HelloWorld::canMove), 1.0 / 60, kRepeatForever, 0);
+	schedule(schedule_selector(HelloWorld::showDialog), 1.0 / 60, kRepeatForever, 0);
 	//schedule(schedule_selector(HelloWorld::cameraMove), 1.0 / 60, kRepeatForever, 0);
 	//schedule(schedule_selector(HelloWorld::itemMenuMove), 1.0 / 60, kRepeatForever, 0);
 }
@@ -221,11 +227,14 @@ bool HelloWorld::initLayer() {
 	m_UI_Background = Layer::create();
 	m_UI_Background->setPosition(origin);
 	this->addChild(m_UI_Background, 10);
+
+	m_UI_Afterall = Layer::create();
+	m_UI_Afterall->setPosition(origin);
+	this->addChild(m_UI_Afterall, 0);
 	return true;
 }
 
 void HelloWorld::initDialog() {
-
 }
 
 bool HelloWorld::init()
@@ -285,6 +294,13 @@ void HelloWorld::onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* e
 }
 
 void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
+	if (m_UI_Dialog->getChildrenCount() > 0) {
+		m_UI_Dialog->removeAllChildren();
+		if (dialogStack.empty()) {
+			canmove = true;
+			cameramove = false;
+		}
+	}
 	if (keyCode == EventKeyboard::KeyCode::KEY_Q) {
 		if (!changingTool) {
 			auto playerdata = (Player*)player->getUserData();
@@ -340,7 +356,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 	if (keyCode == EventKeyboard::KeyCode::KEY_J) {
 		for (int i = 0; i < itemsVectorInMap.size(); i++) {
 			Sprite *projectile = (CCSprite *)itemsVectorInMap.at(i);
-			if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+			if (player->boundingBox().intersectsRect(projectile->boundingBox())&&(abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
 				if (itemsVectorInPlayer.find(projectile) == itemsVectorInPlayer.end()) {
 					m_UI_Game->removeChild(projectile);
 					player->addChild(projectile);
@@ -355,14 +371,19 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					auto Tool = CCSprite::createWithSpriteFrameName("UI/" + projectile->getName() + ".png");
 					Tool->setPosition(Vec2(505 + ((PlayerData->getHoldingToolsNum() - 1) * 130), 80));
 					itemMenu->addChild(Tool);
+
+					rootNode->getChildByName("Door")->removeChildByName("Wall_TEMP_12");
 				}
 			}
 		}
 
 		for (int i = 0; i < objectsVector.size(); i++) {
 			Sprite *projectile = (CCSprite *)objectsVector.at(i);
-			auto HoldingToolName = ((Player*)player->getUserData())->getHoldingTool()->getToolName();
-			if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+			string HoldingToolName = "";
+			if (((Player*)player->getUserData())->getHoldingToolsNum() > 0) {
+				HoldingToolName = ((Player*)player->getUserData())->getHoldingTool()->getToolName();
+			}
+			if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
 				if (projectile->getName() == "Object001") {
 					if (HoldingToolName == "hairpin") {
 						auto object = (Construct*)projectile->getUserData();
@@ -421,6 +442,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						else {
 							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
 							playerAction(playerActionNoidea, 8);
+							PopScene * popLayer = PopScene::create("UI//A.png", "瓜瓜:我得想办法把阁楼的楼梯放下来，可是我的手够不着，我需要一个长长的带勾的东西。", 1);
+							popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+							m_UI_Dialog->addChild(popLayer);
 						}
 					}
 				}
@@ -448,6 +472,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						else {
 							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
 							playerAction(playerActionNoidea, 8);
+							PopScene * popLayer = PopScene::create("UI//A.png", "瓜瓜:烟太呛了，我不可能下得去，我需要水把火给浇灭。", 1);
+							popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+							m_UI_Dialog->addChild(popLayer);
 						}
 					}
 				}
@@ -468,9 +495,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							//play
 							rootNode->getChildByName("Door")->removeChildByName("Door004");
 							
-							dad->setName("dad");
+							dad->setName("Dad");
 							auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
-							m_UI_Game->addChild(dad);
 							setPlayerPositionByZone(dad, zone006);
 							actorPlayAction(dad, dadstand, 1);
 
@@ -480,6 +506,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						else {
 							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
 							playerAction(playerActionNoidea, 8);
+							PopScene * popLayer = PopScene::create("UI//B.png", "千金:太好了，你进来了。但是我没办法打开房间的门，你去找一下钥匙吧，我猜他们把钥匙藏在了他们房间里。", 1);
+							popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+							m_UI_Dialog->addChild(popLayer);
 						}
 					}
 				}
@@ -546,7 +575,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						Sprite *event010 = (CCSprite *)rootNode->getChildByName("Event")->getChildByName("Event010");
 						auto eventobject = (Construct*)event010->getUserData();
 						eventobject->setState(1);
-						playerAction(pturn, 15);
+						auto playerActionWheelTurn = ((Player*)player->getUserData())->getActionPlayerWheelTurn();
+						playerAction(playerActionWheelTurn, 15);
 					}
 				}
 			}
@@ -554,7 +584,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 
 		for (int i = 0; i < uselessObjectsVector.size(); i++) {
 			Sprite *projectile = (CCSprite *)uselessObjectsVector.at(i);
-			if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+			if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
 				auto object = (ObjectMy*)projectile->getUserData();
 				projectile->stopAllActions();
 				auto a = object->objectplay();
@@ -572,12 +602,15 @@ void HelloWorld::updateStart(float delta)
 }
 
 void HelloWorld::canMove(float delta) {
+	if (m_UI_Dialog->getChildrenCount() > 0) {
+		canmove = false;
+	}
 }
 
 void HelloWorld::conTact(float delta) {
 	for (int i = 0; i < eventVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)eventVector.at(i);
-		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
 			if (projectile->getName() == "Event001") {
 				auto object = (Construct*)projectile->getUserData();
 				if (object->getState() == 0) {
@@ -617,20 +650,25 @@ void HelloWorld::conTact(float delta) {
 	onStair = false;
 	for (int i = 0; i < stairsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)stairsVector.at(i);
-		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
 			auto object = (Construct*)projectile->getUserData();
 			if (object->getState() == 0) {
-				if (abs(player->getPosition().x - projectile->getPosition().x) < 30) {
-					onStair = true;
+				if (abs(player->getPosition().x - projectile->getPosition().x) < 100) {
+						onStair = true;
 				}
 			}
+		}
+	}
+	if (onStair == false&&standBy == false) {
+		if (playerState == 16) {
+			playerState = -1;
 		}
 	}
 	bool tempstandBy = standBy;
 	standBy = false;
 	for (int i = 0; i < StandBysVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)StandBysVector.at(i);
-		if (player->boundingBox().intersectsRect(projectile->boundingBox())) {
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
 			if (abs(player->getPosition().x - projectile->getPosition().x) < 30) {
 				standBy = true;
 				droping = false;
@@ -1085,6 +1123,11 @@ void HelloWorld::playerAction(Animation* paction, int i) {
 		stopAnimate();
 		kailouti = false;
 		playerState = -1;
+		if (((Sequence*)sender)->getTag() == 12) {
+			PopScene * popLayer = PopScene::create("UI//B.png", "糕糕:哈哈太好啦，我现在能逃出去了！不对…糟了，我爸爸在楼下呢！你能想点办法支开他吗？", 1);
+			popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+			m_UI_Dialog->addChild(popLayer);
+		}
 	});
 	canmove = false;
 	Animate* playerTempAction = Animate::create(paction);
@@ -1169,7 +1212,6 @@ void HelloWorld::princesscomming() {
 			Animate* princessStand = Animate::create(prstand);
 			princess->stopAllActions();
 			princess->runAction(princessStand);
-			cameramove = false;
 			canmove = true;
 		});
 		canmove = false;
@@ -1177,6 +1219,22 @@ void HelloWorld::princesscomming() {
 		Animate* princessTalk = Animate::create(prtalk);
 		Animate* princessThrow = Animate::create(prthrow);
 		auto action = Sequence::create(princessKao, princessTalk, princessThrow, actionDone, NULL);
+		PopScene * popLayer1 = PopScene::create("UI//B.png", "千金:啊，那边的姐姐，请帮帮我！", 1);
+		popLayer1->setPosition(camera->getPosition() + Vec2(0, -250));
+		PopScene * popLayer2 = PopScene::create("UI//A.png", "瓜瓜:你怎么了？", 1);
+		popLayer2->setPosition(camera->getPosition() + Vec2(0, -250));
+		PopScene * popLayer3 = PopScene::create("UI//B.png", "千金:我想离家出走，但是我爸妈把我锁在房间里了，请一定要帮帮我。", 1);
+		popLayer3->setPosition(camera->getPosition() + Vec2(0, -250));
+		PopScene * popLayer4 = PopScene::create("UI//A.png", "千金:拿着这个，希望你能找到方法进来。", 1);
+		popLayer4->setPosition(camera->getPosition() + Vec2(0, -250));
+		m_UI_Afterall->addChild(popLayer1);
+		m_UI_Afterall->addChild(popLayer2);
+		m_UI_Afterall->addChild(popLayer3);
+		m_UI_Afterall->addChild(popLayer4);
+		dialogStack.pushBack(popLayer4);
+		dialogStack.pushBack(popLayer3);
+		dialogStack.pushBack(popLayer2);
+		dialogStack.pushBack(popLayer1);
 		princess->runAction(action);
 	});
 	auto pos = (player->getPosition() + princess->getPosition()) / 2;
@@ -1247,4 +1305,16 @@ void HelloWorld::playerGetTool(Sprite* tool) {
 	string name = tool->getName();
 	Tool* newTool = new Tool(num, name);
 	playerData->addNewTool(newTool);
+}
+
+void HelloWorld::showDialog(float delta) {
+	if (m_UI_Dialog->getChildrenCount() == 0) {
+		if (!dialogStack.empty()) {
+			PopScene* dia = dialogStack.back();
+			m_UI_Afterall->removeChild(dia);
+			m_UI_Dialog->addChild(dia);
+			dialogStack.popBack();
+			int a = 2;
+		}
+	}
 }

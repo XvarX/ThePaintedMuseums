@@ -47,7 +47,7 @@ private:
 //Derived Dad Class
 class Dad :public Actor {
 public:
-	Dad(string ActorNmae, int ActorNumber);
+	Dad(string ActorName, int ActorNumber);
 	Animation* getActionDadStandBy();
 	Animation* getActionDadoutFire();
 private:

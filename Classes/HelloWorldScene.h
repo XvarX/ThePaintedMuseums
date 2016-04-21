@@ -6,8 +6,9 @@
 #include <listeneradapter.h>
 #include "Gif\GifBase.h"
 #include "Gif\InstantGif.h"
+#include"PopScene.h"
 #include <string>
-
+#include <vector>
 USING_NS_CC;
 using namespace std;
 class HelloWorld : public cocos2d::Layer
@@ -52,6 +53,7 @@ public:
 	void cameraMoveLeft(float delta);
 	void itemMenuMove(float delta);
 	void conTact(float delta);
+	void showDialog(float delta);
 	void playerAction();
 	void canMove(float delta);
 	void showItem(string ItemName);
@@ -142,6 +144,7 @@ private:
 	Vector<Node*> uselessObjectsVector;
 	Vector<Node*> StandBysVector;
 	Vector<Node*> XieposVector;
+	Vector<PopScene*> dialogStack;
 	Sprite* camera;
 	Sprite* tempitem;
 	Layer* m_UI_Dialog;			//对话框层 最高层
@@ -149,6 +152,7 @@ private:
 	Layer* m_UI_Player;         //玩家层 再次高层
 	Layer* m_UI_Game;			//游戏层 低层
 	Layer* m_UI_Background;		//背景层 底层
+	Layer* m_UI_Afterall;       //暗黑层 不应该存在层
 };
 
 #endif // __HELLOWORLD_SCENE_H__
