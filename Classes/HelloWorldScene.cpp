@@ -123,6 +123,14 @@ void HelloWorld::setGame() {
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
 	//player->setPosition(Vec2(7100, 4000));
 
+	dad->setName("Dad");
+	auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
+	setPlayerPositionByZone(dad, zone006);
+	actorPlayAction(dad, dadstand, 1);
+
+	mom->setName("mom");
+	mom->setPosition(-100, -100);
+	m_UI_Game->addChild(mom);
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
 	m_UI_Game->addChild(princess);
@@ -246,6 +254,7 @@ bool HelloWorld::init()
 	rotation = 0;
 	playerState = 0;
 	dropspeed = 0;
+	arrowTimes = 0;
 	droping = false;
 	kailouti = false;
 	cameramove = false;
@@ -273,7 +282,6 @@ bool HelloWorld::init()
 	//background follow
 	auto follow = Follow::create(camera);
 	this->runAction(follow);
-
 	//event listener
 	return true;
 }
@@ -299,6 +307,65 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 		if (dialogStack.empty()) {
 			canmove = true;
 			cameramove = false;
+		}
+	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_UP_ARROW) {
+		if (catalog->isVisible()) {
+			if (arrowTimes != 0) {
+				arrowTimes--;
+			}
+			if (arrowTimes == 1) {
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185) + Vec2(0, -142));
+			}
+			else if (arrowTimes == 2) {
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185) + Vec2(0, -290));
+			}
+			else if (arrowTimes == 3) {
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185) + Vec2(0, -403));
+			}
+			else if (arrowTimes == 0) {
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185));
+			}
+		}
+	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_DOWN_ARROW) {
+		if (catalog->isVisible()) {
+			if (arrowTimes != 3) {
+				arrowTimes++;
+			}
+			if (arrowTimes == 1) {
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185) + Vec2(0, -142));
+			}
+			else if (arrowTimes == 2) {
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185) + Vec2(0, -290));
+			}
+			else if (arrowTimes == 3) {
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185) + Vec2(0, -403));
+			}
+			else if (arrowTimes == 0) {
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185));
+			}
+		}
+	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_ESCAPE) {
+		if (catalog->isVisible()) {
+			catalog->setVisible(false);
+			arrow->setVisible(false);
+			canmove = true;
+		}
+		else {
+			if (canmove) {
+				catalog->setPosition(camera->getPosition());
+				arrow->setPosition(camera->getPosition() + Vec2(-205, 185));
+				MusicTimer->setPosition(camera->getPosition() + Vec2(70, 182));
+				SoundTimer->setPosition(camera->getPosition() + Vec2(70, 42));
+				catalog->setVisible(true);
+				arrow->setVisible(true);
+				MusicTimer->setVisible(true);
+				SoundTimer->setVisible(true);
+				arrowTimes = 0;
+				canmove = false;
+			}
 		}
 	}
 	if (keyCode == EventKeyboard::KeyCode::KEY_Q) {
@@ -494,11 +561,6 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							object->setState(-1);
 							//play
 							rootNode->getChildByName("Door")->removeChildByName("Door004");
-							
-							dad->setName("Dad");
-							auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
-							setPlayerPositionByZone(dad, zone006);
-							actorPlayAction(dad, dadstand, 1);
 
 							auto playerActionDoorOpen = ((Player*)player->getUserData())->getActionPlayerDoorOpen();
 							playerAction(playerActionDoorOpen, 12);
@@ -559,6 +621,14 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 
 								auto playerActionIgnite = ((Player*)player->getUserData())->getActionPlayerIgnite();
 								playerAction(playerActionIgnite, 14);
+
+								PopScene * popLayer1 = PopScene::create("UI//C.png", "爸爸：不——————————！！我的书啊！！！", 1);
+								popLayer1->setPosition(camera->getPosition() + Vec2(0, -250));
+								PopScene * popLayer2 = PopScene::create("UI//B.png", "糕糕:太棒了，我才不在乎书房会烧成什么样呢，爸爸以前就一直在书房里看书不陪我玩~不过我妈妈还在楼下洗澡，你再帮我一下呗~在下水道里应该可以把洗澡水一下变冷呢，这样她就得疯上一会了。", 1);
+								popLayer2->setPosition(camera->getPosition() + Vec2(0, -250));
+								dialogStack.pushBack(popLayer2);
+								dialogStack.pushBack(popLayer1);
+
 							}
 							else {
 								auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
@@ -577,6 +647,12 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						eventobject->setState(1);
 						auto playerActionWheelTurn = ((Player*)player->getUserData())->getActionPlayerWheelTurn();
 						playerAction(playerActionWheelTurn, 15);
+						PopScene * popLayer1 = PopScene::create("UI//D.png", "妈妈：呀啊啊啊~~~~~！", 1);
+						popLayer1->setPosition(camera->getPosition() + Vec2(0, -250));
+						PopScene * popLayer2 = PopScene::create("UI//B.png", "千金: 嘿嘿，妈妈平时老是泡在浴缸里，怎么不变成胖大海呢？", 1);
+						popLayer2->setPosition(camera->getPosition() + Vec2(0, -250));
+						dialogStack.pushBack(popLayer2);
+						dialogStack.pushBack(popLayer1);
 					}
 				}
 			}
@@ -589,8 +665,27 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				projectile->stopAllActions();
 				auto a = object->objectplay();
 				auto action = Animate::create(a);
+				projectile->stopAllActions();
 				projectile->runAction(action);
 			}
+		}
+
+		if (player->boundingBox().intersectsRect(dad->boundingBox()) && (abs(player->getPosition().x - dad->getPosition().x) < 100)) {
+			if (rootNode->getChildByName("Door")->getChildByName("Door004") != NULL) {
+				PopScene * popLayer = PopScene::create("UI//C.png", "爸爸:嘿，你好呀，你是糕糕的朋友吧？很抱歉，她现在在门禁呢，不过你可以到处逛逛~", 1);
+				popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+				m_UI_Dialog->addChild(popLayer);
+			}
+			else {
+				PopScene * popLayer = PopScene::create("UI//C.png", "爸爸:你想找我玩吗？哈哈哈，抱歉小淑女，我现在很忙，除非有什么突发状况，比如说我的宝贝书房烧起来了什么的，不然我现在可走不开。", 1);
+				popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+				m_UI_Dialog->addChild(popLayer);
+			}
+		}
+		if (player->boundingBox().intersectsRect(mom->boundingBox()) && (abs(player->getPosition().x - mom->getPosition().x) < 100)) {
+			PopScene * popLayer = PopScene::create("UI//D.png", "妈妈:??~~?(浴室哼唱)", 1);
+			popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+			m_UI_Dialog->addChild(popLayer);
 		}
 	}
 }
@@ -629,10 +724,7 @@ void HelloWorld::conTact(float delta) {
 				if (object->getState() == 1) {
 					object->setState(-1);
 					rootNode->getChildByName("Object")->removeChildByName("Object011");
-					Sprite* mom = Sprite::create("mom.png");
-					mom->setName("mom");
 					auto zone009 = rootNode->getChildByName("Zone")->getChildByName("Zone009");
-					m_UI_Game->addChild(mom);
 					setPlayerPositionByZone(mom, zone009);
 				}
 			}
@@ -875,7 +967,11 @@ void HelloWorld::update(float dt)
 		camera->setPosition(a);
 	}
 	auto itemMenuPos = camearPos + Vec2(0, -440);
+	auto lifeSlotPos = camearPos + Vec2(-755, 410);
 	itemMenu->setPosition(itemMenuPos);
+	lifeSlot->setPosition(lifeSlotPos);
+	auto HPPos = lifeSlot->getPosition();
+	HPTimer->setPosition(HPPos);
 }
 void HelloWorld::changeLocation(float dt) {
 	if (Location != player->isFlippedX()) {
@@ -1252,17 +1348,49 @@ void HelloWorld::actorPlayAction(Sprite* actor, Animation* paction, int actionnu
 
 void HelloWorld::initItemMenu() {
 	itemMenu = CCSprite::createWithSpriteFrameName("UI/toolMenu.png");
+	lifeSlot = CCSprite::createWithSpriteFrameName("UI/lifeslot.png");
+	catalog = CCSprite::createWithSpriteFrameName("UI/catalog.png");
+	arrow = CCSprite::createWithSpriteFrameName("UI/arrow.png");
+	catalog->setVisible(false);
+	arrow->setVisible(false);
+	CCSprite *progress2Sprite = CCSprite::createWithSpriteFrameName("UI/HP.png");
+	CCSprite *progress2Sprite_ = CCSprite::createWithSpriteFrameName("UI/EXP.png");
+	HPTimer = ProgressTimer::create(progress2Sprite);
+	HPTimer->setType(kCCProgressTimerTypeBar);
 	/*auto test = CCSprite::createWithSpriteFrameName("UI/roomKey.png");
 	test->setPosition(Vec2(505, 80));
 	itemMenu->addChild(test,60);*/
-	m_UI_Tool->addChild(itemMenu, 1);
+	HPTimer->setMidpoint(ccp(0, 0));
+	HPTimer->setBarChangeRate(ccp(1, 0));
+	HPTimer->setPercentage(100);
+	SoundTimer = ProgressTimer::create(progress2Sprite_);
+	MusicTimer = ProgressTimer::create(progress2Sprite_);
+
+	SoundTimer->setType(kCCProgressTimerTypeBar);
+	SoundTimer->setMidpoint(ccp(0, 0));
+	SoundTimer->setBarChangeRate(ccp(1, 0));
+	SoundTimer->setPercentage(100);
+	SoundTimer->setVisible(false);
+
+	MusicTimer->setType(kCCProgressTimerTypeBar);
+	MusicTimer->setMidpoint(ccp(0, 0));
+	MusicTimer->setBarChangeRate(ccp(1, 0));
+	MusicTimer->setPercentage(100);
+	MusicTimer->setVisible(false);
+	m_UI_Tool->addChild(itemMenu);
+	m_UI_Tool->addChild(lifeSlot);
+	m_UI_Tool->addChild(HPTimer);
+	m_UI_Tool->addChild(catalog);
+	m_UI_Tool->addChild(arrow);
+	m_UI_Tool->addChild(SoundTimer);
+	m_UI_Tool->addChild(MusicTimer);
 }
 
 void HelloWorld::initActor() {
 	player = Sprite::create("player1.png");
 	princess = Sprite::create("princess.png");
 	dad = Sprite::create("dad.png");
-
+	mom = Sprite::create("mom.png");
 	Player* newPlayer = new Player("Player", 0);
 	Princess* newPrincess = new Princess("Princess", 1);
 	Dad* newDad = new Dad("Dad", 2);

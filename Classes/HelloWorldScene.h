@@ -77,7 +77,14 @@ private:
 	Sprite* player;
 	Sprite* princess;
 	Sprite* dad;
+	Sprite* mom;
 	Sprite* itemMenu;
+	Sprite* lifeSlot;
+	Sprite* catalog;
+	Sprite* arrow;
+	ProgressTimer* HPTimer;
+	ProgressTimer* MusicTimer;
+	ProgressTimer* SoundTimer;
 	string itemName;
 	Sprite* background;
 	PhysicsWorld* m_world;
@@ -94,6 +101,7 @@ private:
 	float rotation;
 	bool playingAction;
 	int playerState;
+	int arrowTimes;
 	double dropspeed;
 	Animation* pStand;
 	Animation* pWalk;

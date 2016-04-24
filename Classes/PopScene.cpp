@@ -87,10 +87,10 @@ void PopScene::setContent()
 	color.b = 17;
 	content->setColor(color);
 
-	if (backgroundname == "UI//A.png" || backgroundname == "UI//C.png") {
+	if (backgroundname == "UI//A.png" || backgroundname == "UI//D.png") {
 		content->setPosition(ccp(m_size.width * 0.58, m_size.height * 0.20));
 	}
-	else if (backgroundname == "UI//B.png" || backgroundname == "UI//D.png") {
+	else if (backgroundname == "UI//B.png" || backgroundname == "UI//C.png") {
 		content->setPosition(ccp(m_size.width * 0.4, m_size.height * 0.20));
 	}
 	//content->setPosition(ccp(m_size.width * 0.5, m_size.height * 0.23));
