@@ -48,6 +48,7 @@ public:
 	void actorContinuousAction(Sprite* actor, Animation* action, int actionnum);
 	void actorSingleAction(Sprite* actor, Animation* action, int actionnum);
 
+	void preloadMusic();
 	void princesscomming();
 	void cameraMove(float delta);
 	void cameraMoveLeft(float delta);
@@ -73,6 +74,7 @@ private:
 	bool cameramove;
 	bool up;
 	bool down;
+	double moveV;
 	Node* rootNode;
 	Sprite* player;
 	Sprite* princess;
@@ -142,6 +144,7 @@ private:
 	Animation* object013;
 
 	ccColor4B stairBlue;
+	Node* usefulObject;
 	Vector<Node*> contactVector;
 	Vector<Node*> eventVector;
 	Vector<Node*> itemsVectorInMap;
@@ -150,6 +153,9 @@ private:
 	Vector<Node*> stairsVector;
 	Vector<Node*> objectsVector;
 	Vector<Node*> uselessObjectsVector;
+	Vector<Node*> scareObjectsVector;
+	Vector<Node*> damageObjectsVector;
+	Vector<Node*> usefulObjectsVector;
 	Vector<Node*> StandBysVector;
 	Vector<Node*> XieposVector;
 	Vector<PopScene*> dialogStack;

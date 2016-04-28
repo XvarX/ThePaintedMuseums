@@ -11,13 +11,19 @@ using namespace std;
 class ObjectMy {
 public:
 	ObjectMy();
-	ObjectMy(string ObjectNmae, int ObjectrNumber,bool back);
+	ObjectMy(string ObjectNmae, int ObjectrNumber, bool back, bool damage, int time = 1);
 	string getObjectName();
 	int getObjectNumber();
 	Animation* objectplay();
+	void changeObjectAction(int i, bool back, int time);
+	bool isDamage();
+	void pushActionVector(int i, bool back, int time);
+	Animation* getActionbyindex(int i);
 private:
 	string Name;
+	bool damage;
 	int Number;
 	Animation* actionplay;
+	Vector<Animation*> actionVector;
 };
 #endif
