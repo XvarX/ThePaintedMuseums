@@ -75,6 +75,7 @@ Animation* Dad::getActionDadoutFire() {
 
 //Derived Player Class
 Player::Player(string ActorName, int ActorNumber) :Actor(ActorName, ActorNumber) {
+	HP = 10;
 	HoldingTool = NULL;
 	HoldingNum = -1;
 	playerDownStair = initAnimationByName("playerDownStair", -1, false);
@@ -93,7 +94,12 @@ Player::Player(string ActorName, int ActorNumber) :Actor(ActorName, ActorNumber)
 	playerSearch = initAnimationByName("playerSearch", 1, false);
 	playerGet = initAnimationByName("playerGet", 1, false);
 	playerDoorOpen = initAnimationByName("playerDoorOpen", 1, false);
+	playerScareLv1 = initAnimationByName("playerScareLv1", -1, false);
+	playerScareLv2 = initAnimationByName("playerScareLv2", -1, false);
+	playerShake = initAnimationByName("playerShake", 1, false);
+	playerComa = initAnimationByName("playerComa", 1, false);
 }
+
 Animation* Player::getActionPlayerDownStair() {
 	return playerDownStair;
 }
@@ -142,6 +148,30 @@ Animation* Player::getActionPlayerGet() {
 Animation* Player::getActionPlayerFall() {
 	return playerFall;
 }
+Animation* Player::getActionPlayerScareLv1() {
+	return playerScareLv1;
+}
+Animation* Player::getActionPlayerScareLv2() {
+	return playerScareLv2;
+}
+Animation* Player::getActionPlayerComa() {
+	return playerComa;
+}
+
+Animation* Player::getActionPlayerShake() {
+	return playerShake;
+}
+void Player::changeStand(int i) {
+	if (i == 1) {
+		stand = playerScareLv1;
+	}
+	else if (i = -2) {
+		stand = playerScareLv2;
+	}
+}
+void Player::reduceHp() {
+	HP--;
+}
 void Player::addNewTool(Tool* newTool) {
 	toolHoldingVector.push_back(newTool);
 	if (toolHoldingVector.size() == 1) {
@@ -178,4 +208,7 @@ int Player::getHoldingToolsNum() {
 }
 Tool* Player::getHoldingTool() {
 	return HoldingTool;
+}
+int Player::getHP() {
+	return HP;
 }

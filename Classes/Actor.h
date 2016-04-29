@@ -22,13 +22,13 @@ public:
 	Animation* getActionStand();
 	Animation* getActionWalk();
 	Animation* getActionTalk();
-
+	Animation* stand;
 private:
 	string Name;
 	int Number;
 	int state;
 	bool canMove;
-	Animation* stand;
+
 	Animation* walk;
 	Animation* talk;
 };
@@ -62,6 +62,9 @@ public:
 	int getHoldingToolsNum();
 	void turnHoldingTool(int location);//0向前，1向后
 	void addNewTool(Tool* newTool);
+	void changeStand(int i);
+	int getHP();
+	void reduceHp();
 	Tool* getHoldingTool();
 	Animation* getActionPlayerDownStair();
 	Animation* getActionPlayerUpStair();
@@ -79,7 +82,13 @@ public:
 	Animation* getActionPlayerSearch();
 	Animation* getActionPlayerGet();
 	Animation* getActionPlayerFall();
+
+	Animation* getActionPlayerScareLv1();
+	Animation* getActionPlayerScareLv2();
+	Animation* getActionPlayerShake();
+	Animation* getActionPlayerComa();
 private:
+	int HP;
 	Animation* playerDownStair;
 	Animation* playerUpStair;
 	Animation* playerJump;
@@ -96,6 +105,10 @@ private:
 	Animation* playerClimb;
 	Animation* playerSearch;
 	Animation* playerGet;
+	Animation* playerScareLv1;
+	Animation* playerScareLv2;
+	Animation* playerComa;
+	Animation* playerShake;
 	vector<Tool*> toolHoldingVector;
 	Tool* HoldingTool;
 	int HoldingNum;

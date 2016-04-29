@@ -34,7 +34,7 @@ Scene* HelloWorld::createScene()
 
 void HelloWorld::setScene() {
 	//set the background
-	background = Sprite::create("background03-20.jpg");
+	background = Sprite::create("background04-28.jpg");
 	background->setPosition(background->getContentSize() / 2);
 
 	//set the jugement background
@@ -160,7 +160,7 @@ void HelloWorld::setGame() {
 	setPlayerPositionByZone(princess, zone002);
 	camera = Sprite::create("camera.jpg");
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
-	player->setPosition(Vec2(5000, 4000));
+	player->setPosition(Vec2(2200, 1200));
 
 	dad->setName("Dad");
 	auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
@@ -260,6 +260,11 @@ void HelloWorld::configEventListener() {
 
 bool HelloWorld::initLayer() {
 	auto origin = Director::getInstance()->getVisibleOrigin();
+
+	m_UI_Movie = Layer::create();
+	m_UI_Movie->setPosition(origin);
+	this->addChild(m_UI_Movie, 50);
+
 	m_UI_Dialog = Layer::create();
 	m_UI_Dialog->setPosition(origin);
 	this->addChild(m_UI_Dialog, 40);
@@ -296,12 +301,14 @@ bool HelloWorld::init()
 	playerState = 0;
 	dropspeed = 0;
 	arrowTimes = 0;
+	bigArrowTimes = 0;
 	droping = false;
 	kailouti = false;
 	cameramove = false;
 	jumping = false;
 	onStair = false;
 	standBy = false;
+	die = false;
 	onxiepo = false;
 	canmove = true;
 	Location = false;
@@ -309,7 +316,7 @@ bool HelloWorld::init()
 	changingTool = false;
 	rootNode = CSLoader::createNode("MainScene.csb");
 	CCSpriteFrameCache *pFrameCache = CCSpriteFrameCache::sharedSpriteFrameCache();
-	pFrameCache->addSpriteFramesWithFile("UI//Plist2.plist");
+	pFrameCache->addSpriteFramesWithFile("UI//Plist1.plist");
 	initLayer();
 	initAnimate();
 	initItemMenu();
@@ -320,14 +327,15 @@ bool HelloWorld::init()
 	configSchedule();
 	configEventListener();
 	preloadMusic();
+	initop();
 	auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object016");
 	auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
 	auto objectAction = objectData->objectplay();
 	Animate* objectPlay = Animate::create(objectAction);
 	object->runAction(objectPlay);
 	//background follow
-	auto follow = Follow::create(camera);
-	this->runAction(follow);
+	//auto follow = Follow::create(camera);
+	//this->runAction(follow);
 	//event listener
 
 	SimpleAudioEngine::getInstance()->playBackgroundMusic("Music//BGM.mp3", true);
@@ -358,6 +366,29 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			cameramove = false;
 		}
 	}
+	if (m_UI_Movie->getChildByTag(1) != NULL) {
+		m_UI_Movie->removeChildByTag(1);
+		auto follow = Follow::create(camera);
+		this->runAction(follow);
+	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_ENTER) {
+		if (catalog->isVisible()) {
+			if (arrowTimes == 2) {
+				reStartGame();
+			}
+			else if (arrowTimes == 3) {
+				exit(0);
+			}
+		}
+		if (endChoice->isVisible()) {
+			if (arrowTimes == 1) {
+
+			}
+			else if (arrowTimes == 0) {
+
+			}
+		}
+	}
 	if (keyCode == EventKeyboard::KeyCode::KEY_UP_ARROW) {
 		if (catalog->isVisible()) {
 			if (arrowTimes != 0) {
@@ -374,6 +405,17 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			}
 			else if (arrowTimes == 0) {
 				arrow->setPosition(camera->getPosition() + Vec2(-205, 185));
+			}
+		}
+		if (endChoice->isVisible()) {
+			if (arrowTimes != 0) {
+				arrowTimes--;
+			}
+			if (arrowTimes == 1) {
+				bigArrow->setPosition(camera->getPosition() + Vec2(-400, 118) + Vec2(0, -260));
+			}
+			else if (arrowTimes == 0) {
+				bigArrow->setPosition(camera->getPosition() + Vec2(-400, 118));
 			}
 		}
 	}
@@ -393,6 +435,17 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			}
 			else if (arrowTimes == 0) {
 				arrow->setPosition(camera->getPosition() + Vec2(-205, 185));
+			}
+		}
+		if (endChoice->isVisible()) {
+			if (arrowTimes != 1) {
+				arrowTimes++;
+			}
+			if (arrowTimes == 1) {
+				bigArrow->setPosition(camera->getPosition() + Vec2(-400, 118) + Vec2(0, -260));
+			}
+			else if (arrowTimes == 0) {
+				bigArrow->setPosition(camera->getPosition() + Vec2(-400, 118));
 			}
 		}
 	}
@@ -753,6 +806,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 									auto fireaction2 = Animate::create(objectData->getActionbyindex(1));
 									auto seq = Sequence::create(fireaction1, fireaction2, NULL);
 									object->runAction(seq);
+									playerState = -1;
 								});
 								Animate* playerAction = Animate::create(playerActionIgnite);
 								canmove = false;
@@ -834,6 +888,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				auto action = Animate::create(a);
 				projectile->stopAllActions();
 				projectile->runAction(action);
+				playerGetHurt();
 			}
 		}
 
@@ -870,6 +925,53 @@ void HelloWorld::canMove(float delta) {
 }
 
 void HelloWorld::conTact(float delta) {
+	find->setVisible(false);
+	for (int i = 0; i < itemsVectorInMap.size(); i++) {
+		Sprite *projectile = (CCSprite *)itemsVectorInMap.at(i);
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
+			find->setVisible(true);
+		}
+	}
+
+	for (int i = 0; i < objectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)objectsVector.at(i);
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
+			auto object = (Construct*)projectile->getUserData();
+			if (object->getState() != -1) {
+				find->setVisible(true);
+			}
+		}
+	}
+
+	for (int i = 0; i < uselessObjectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)uselessObjectsVector.at(i);
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
+			find->setVisible(true);
+		}
+	}
+
+	for (int i = 0; i < scareObjectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)scareObjectsVector.at(i);
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
+			find->setVisible(true);
+		}
+	}
+
+	for (int i = 0; i < damageObjectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)damageObjectsVector.at(i);
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
+			find->setVisible(true);
+		}
+	}
+
+	if (player->boundingBox().intersectsRect(dad->boundingBox()) && (abs(player->getPosition().x - dad->getPosition().x) < 100)) {
+		find->setVisible(true);
+	}
+
+	if (player->boundingBox().intersectsRect(mom->boundingBox()) && (abs(player->getPosition().x - mom->getPosition().x) < 100)) {
+		find->setVisible(true);
+	}
+
 	for (int i = 0; i < eventVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)eventVector.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
@@ -904,15 +1006,29 @@ void HelloWorld::conTact(float delta) {
 					setPlayerPositionByZone(princess, zone011);
 				}
 			}
+
+			if (projectile->getName() == "Event012") {
+				auto object = (Construct*)projectile->getUserData();
+				if (object->getState() == 0) {
+					object->setState(-1);
+					endChoice->setPosition(camera->getPosition());
+					bigArrow->setPosition(camera->getPosition() + Vec2(-400, 118));
+					endChoice->setVisible(true);
+					bigArrow->setVisible(true);
+					arrowTimes = 0;
+					canmove = false;
+				}
+			}
+
 		}
 	}
 	onStair = false;
 	for (int i = 0; i < stairsVector.size(); i++) {
 		Sprite *projectile = (CCSprite *)stairsVector.at(i);
-		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
+		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 150)) {
 			auto object = (Construct*)projectile->getUserData();
 			if (object->getState() == 0) {
-				if (abs(player->getPosition().x - projectile->getPosition().x) < 100) {
+				if (abs(player->getPosition().x - projectile->getPosition().x) < 150) {
 						onStair = true;
 				}
 			}
@@ -963,12 +1079,14 @@ void HelloWorld::conTact(float delta) {
 }
 void HelloWorld::playerMove(float delta) {
 	//drop when it is not on the floor
-	if (!jumping&&!onStair&&!standBy&&!kailouti) {
-		drop();
-	}
-	playerWalk();
-	if (!standBy) {
-		fixPosition();
+	if (!die) {
+		if (!jumping&&!onStair&&!standBy&&!kailouti) {
+			drop();
+		}
+		playerWalk();
+		if (!standBy) {
+			fixPosition();
+		}
 	}
 }
 
@@ -983,7 +1101,9 @@ void HelloWorld::cameraMove(float delta) {
 void HelloWorld::itemMenuMove(float delta) {
 	auto cameraPos = camera->getPosition();
 	auto itemMenuPos = cameraPos + Vec2(0, -440);
+	auto findPos = player->getPosition() + Vec2(72, 130);
 	itemMenu->setPosition(itemMenuPos);
+	find->setPosition(findPos);
 }
 
 void HelloWorld::playerWalk() {
@@ -1139,6 +1259,11 @@ void HelloWorld::update(float dt)
 	lifeSlot->setPosition(lifeSlotPos);
 	auto HPPos = lifeSlot->getPosition();
 	HPTimer->setPosition(HPPos);
+
+	auto findPos = player->getPosition() + Vec2(80, 140);
+	itemMenu->setPosition(itemMenuPos);
+	find->setPosition(findPos);
+
 }
 void HelloWorld::changeLocation(float dt) {
 	if (Location != player->isFlippedX()) {
@@ -1372,6 +1497,15 @@ void HelloWorld::playerAction() {
 	action->setTag(66);
 	player->runAction(action);
 }
+Animation* HelloWorld::loadAnimateByTime(string path, double time, bool back) {
+	GifAnimationDef* def = new GifAnimationDef;
+	def->loops = 1;
+	def->filePath = path;
+	def->delayPerUnit = 1.0 / 30;
+	def->restoreOriginalFrame = back;
+	auto newresult = GifAnimation::getInstance()->createAnimation(*def);
+	return newresult;
+}
 
 Animation* HelloWorld::loadAnimate(string path, int times, bool back) {
 	GifAnimationDef* def = new GifAnimationDef;
@@ -1385,7 +1519,7 @@ Animation* HelloWorld::loadAnimate(string path, int times, bool back) {
 	return result;
 }
 void HelloWorld::stopAnimate() {
-	for (int i = 0; i <= 18; i++) {
+	for (int i = 0; i <= 20; i++) {
 		player->stopActionByTag(i);
 	}
 	playerState = -1;
@@ -1498,7 +1632,7 @@ void HelloWorld::princesscomming() {
 		popLayer2->setPosition(camera->getPosition() + Vec2(0, -250));
 		PopScene * popLayer3 = PopScene::create("UI//B.png", "我想离家出走，但是我爸妈把我锁在房间里了，请一定要帮帮我。", 1);
 		popLayer3->setPosition(camera->getPosition() + Vec2(0, -250));
-		PopScene * popLayer4 = PopScene::create("UI//A.png", "拿着这个，希望你能找到方法进来。", 1);
+		PopScene * popLayer4 = PopScene::create("UI//B.png", "拿着这个，希望你能找到方法进来。", 1);
 		popLayer4->setPosition(camera->getPosition() + Vec2(0, -250));
 		m_UI_Afterall->addChild(popLayer1);
 		m_UI_Afterall->addChild(popLayer2);
@@ -1528,8 +1662,14 @@ void HelloWorld::initItemMenu() {
 	lifeSlot = CCSprite::createWithSpriteFrameName("UI/lifeslot.png");
 	catalog = CCSprite::createWithSpriteFrameName("UI/catalog.png");
 	arrow = CCSprite::createWithSpriteFrameName("UI/arrow.png");
+	find = CCSprite::createWithSpriteFrameName("UI/find.png");
+	bigArrow = CCSprite::createWithSpriteFrameName("UI/bigArrow.png");
+	endChoice = CCSprite::createWithSpriteFrameName("UI/endChoice.png");
+	find->setVisible(false);
 	catalog->setVisible(false);
 	arrow->setVisible(false);
+	bigArrow->setVisible(false);
+	endChoice->setVisible(false);
 	CCSprite *progress2Sprite = CCSprite::createWithSpriteFrameName("UI/HP.png");
 	CCSprite *progress2Sprite_ = CCSprite::createWithSpriteFrameName("UI/EXP.png");
 	HPTimer = ProgressTimer::create(progress2Sprite);
@@ -1561,6 +1701,9 @@ void HelloWorld::initItemMenu() {
 	m_UI_Tool->addChild(arrow);
 	m_UI_Tool->addChild(SoundTimer);
 	m_UI_Tool->addChild(MusicTimer);
+	m_UI_Tool->addChild(find);
+	m_UI_Tool->addChild(endChoice);
+	m_UI_Tool->addChild(bigArrow);
 }
 
 void HelloWorld::initActor() {
@@ -1646,4 +1789,105 @@ void HelloWorld::preloadMusic() {
 	SimpleAudioEngine::getInstance()->preloadEffect("Music//V24.mp3");
 	SimpleAudioEngine::getInstance()->preloadEffect("Music//V25.mp3");
 	SimpleAudioEngine::getInstance()->preloadEffect("Music//V27.mp3");
+}
+void HelloWorld::playerGetHurt() {
+	auto playerData = (Player*)player->getUserData();
+	playerData->reduceHp();
+	HPTimer->setPercentage(playerData->getHP() * 10);
+	if (playerData->getHP() > 0) {
+		auto playerActionShake = ((Player*)player->getUserData())->getActionPlayerShake();
+		playerAction(playerActionShake, 20);
+		if (playerData->getHP() > 3 && playerData->getHP() <= 6) {
+			playerData->changeStand(1);
+		}
+		else if (playerData->getHP() <= 3) {
+			playerData->changeStand(2);
+		}
+	}
+	else {
+		auto playerActionShake = ((Player*)player->getUserData())->getActionPlayerShake();
+		auto playerActionComa = ((Player*)player->getUserData())->getActionPlayerComa();
+		auto action1 = Animate::create(playerActionShake);
+		auto action2 = Animate::create(playerActionComa);
+		auto seqAction = Sequence::create(action1, action2, NULL);
+		stopAnimate();
+		player->runAction(seqAction);
+		playerState = 21;
+		die = true;
+	}
+}
+
+void HelloWorld::reStartGame() {
+	_eventDispatcher->removeAllEventListeners();
+	CCScene *scene1 = HelloWorld::createScene();
+	CCDirector::sharedDirector()->replaceScene(scene1);
+}
+void HelloWorld::initop() {
+	Sprite* movie = Sprite::create();
+	movie->setTag(1);
+	movie->setPosition(Vec2(960, 540));
+	m_UI_Movie->addChild(movie);
+	auto op01 = Animate::create(loadAnimateByTime("movie//01_op//01-op-01.gif", 2, false));
+	auto times = op01->getAnimation()->getTotalDelayUnits();
+	auto repeattime01 = 2.0 / (times*(1.0 / 30));
+	auto repeat01 = Repeat::create(op01, repeattime01);
+
+	auto op02 = Animate::create(loadAnimateByTime("movie//01_op//01-op-02.gif", 2, false));
+	times = op02->getAnimation()->getTotalDelayUnits();
+	auto repeattime02 = 2.0 / (times*(1.0 / 30));
+	auto repeat02 = Repeat::create(op02, repeattime02);
+
+	auto op03 = Animate::create(loadAnimateByTime("movie//01_op//01-op-03.gif", 2, false));
+	times = op03->getAnimation()->getTotalDelayUnits();
+	auto repeattime03 = 2.0 / (times*(1.0 / 30));
+	auto repeat03 = Repeat::create(op03, repeattime03);
+
+	auto op04 = Animate::create(loadAnimateByTime("movie//01_op//01-op-04.gif", 2, false));
+	times = op04->getAnimation()->getTotalDelayUnits();
+	auto repeattime04 = 2.0 / (times*(1.0 / 30));
+	auto repeat04 = Repeat::create(op04, repeattime04);
+
+	auto op05 = Animate::create(loadAnimateByTime("movie//01_op//01-op-05.gif", 2, false));
+	times = op05->getAnimation()->getTotalDelayUnits();
+	auto repeattime05 = 2.0 / (times*(1.0 / 30));
+	auto repeat05 = Repeat::create(op05, repeattime05);
+
+	auto op06 = Animate::create(loadAnimateByTime("movie//01_op//01-op-06.gif", 2, false));
+	times = op06->getAnimation()->getTotalDelayUnits();
+	auto repeattime06 = 2.0 / (times*(1.0 / 30));
+	auto repeat06 = Repeat::create(op06, repeattime06);
+
+	auto op07 = Animate::create(loadAnimateByTime("movie//01_op//01-op-07.gif", 2, false));
+	times = op07->getAnimation()->getTotalDelayUnits();
+	auto repeattime07 = 2.0 / (times*(1.0 / 30));
+	auto repeat07 = Repeat::create(op07, repeattime07);
+
+	auto op08 = Animate::create(loadAnimateByTime("movie//01_op//01-op-08.gif", 2, false));
+	times = op08->getAnimation()->getTotalDelayUnits();
+	auto repeattime08 = 2.0 / (times*(1.0 / 30));
+	auto repeat08 = Repeat::create(op08, repeattime08);
+
+	auto op09 = Animate::create(loadAnimateByTime("movie//01_op//01-op-09.gif", 2, false));
+	times = op09->getAnimation()->getTotalDelayUnits();
+	auto repeattime09 = 2.0 / (times*(1.0 / 30));
+	auto repeat09 = Repeat::create(op09, repeattime09);
+
+	auto start = Animate::create(loadAnimateByTime("movie//02_start//02-start.gif", 2, false));
+	times = start->getAnimation()->getTotalDelayUnits();
+	auto starttime = 120.0 / (times*(1.0 / 30));
+	auto startrepeat = Repeat::create(start, starttime);
+
+	auto seqa = Sequence::create(repeat01, repeat02, repeat03, repeat04, repeat05, repeat06, repeat07, repeat08, repeat09, startrepeat, NULL);
+	auto repeatForever = RepeatForever::create(seqa);
+	movie->runAction(repeatForever);
+}
+void HelloWorld::showend1() {
+	Sprite* movie = Sprite::create();
+	movie->setTag(2);
+	movie->setPosition(camera->getPosition());
+	m_UI_Movie->addChild(movie);
+	auto op01 = Animate::create(loadAnimateByTime("movie//01_op//01-op-01.gif", 2, false));
+	auto times = op01->getAnimation()->getTotalDelayUnits();
+	auto repeattime01 = 2.0 / (times*(1.0 / 30));
+	auto repeat01 = Repeat::create(op01, repeattime01);
 }

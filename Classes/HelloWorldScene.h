@@ -28,13 +28,17 @@ public:
 	void configEventListener();
 	bool initLayer();
 	void initActor();
+	void initop();
+	Animation* getAnimationByPath(string path);
 	void initDialog();
 	void initItemMenu();
 	void stopAnimate();
+	void reStartGame();
 	void playerAction(Animation* action,int i);
 	void playerAction(Animation* action, int i,string Name);
 	void initAnimate();
 	Animation* loadAnimate(string path, int times, bool back);
+	Animation* loadAnimateByTime(string path, double time, bool back);
 	virtual void onKeyReleased(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
 	virtual void onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
 	void setPhyWorld(PhysicsWorld* world) { m_world = world; }
@@ -44,10 +48,12 @@ public:
 	int wallBesideLeft();
 	void playerMove(float delta);
 	void actorPlayAction(Sprite* actor, Animation* paction, int actionnum);
-
+	void playerGetHurt();
 	void actorContinuousAction(Sprite* actor, Animation* action, int actionnum);
 	void actorSingleAction(Sprite* actor, Animation* action, int actionnum);
 
+	void showend1();
+	void showend2();
 	void preloadMusic();
 	void princesscomming();
 	void cameraMove(float delta);
@@ -73,6 +79,7 @@ private:
 	bool right;
 	bool cameramove;
 	bool up;
+	bool die;
 	bool down;
 	double moveV;
 	Node* rootNode;
@@ -84,6 +91,9 @@ private:
 	Sprite* lifeSlot;
 	Sprite* catalog;
 	Sprite* arrow;
+	Sprite* bigArrow;
+	Sprite* endChoice;
+	Sprite* find;
 	ProgressTimer* HPTimer;
 	ProgressTimer* MusicTimer;
 	ProgressTimer* SoundTimer;
@@ -104,6 +114,7 @@ private:
 	bool playingAction;
 	int playerState;
 	int arrowTimes;
+	int bigArrowTimes;
 	double dropspeed;
 	Animation* pStand;
 	Animation* pWalk;
@@ -161,6 +172,7 @@ private:
 	Vector<PopScene*> dialogStack;
 	Sprite* camera;
 	Sprite* tempitem;
+	Layer* m_UI_Movie;          //电影层 最最上层
 	Layer* m_UI_Dialog;			//对话框层 最高层
 	Layer* m_UI_Tool;			//工具栏层 次高层
 	Layer* m_UI_Player;         //玩家层 再次高层
