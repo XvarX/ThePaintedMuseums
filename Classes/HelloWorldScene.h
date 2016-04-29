@@ -54,6 +54,7 @@ public:
 
 	void showend1();
 	void showend2();
+	void showdie();
 	void preloadMusic();
 	void princesscomming();
 	void cameraMove(float delta);

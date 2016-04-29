@@ -160,7 +160,7 @@ void HelloWorld::setGame() {
 	setPlayerPositionByZone(princess, zone002);
 	camera = Sprite::create("camera.jpg");
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
-	player->setPosition(Vec2(2200, 1200));
+	//player->setPosition(Vec2(2200, 1200));
 
 	dad->setName("Dad");
 	auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
@@ -371,6 +371,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 		auto follow = Follow::create(camera);
 		this->runAction(follow);
 	}
+	if (m_UI_Movie->getChildByTag(2) != NULL || m_UI_Movie->getChildByTag(3) != NULL||m_UI_Movie->getChildByTag(4) != NULL) {
+		reStartGame();
+	}
 	if (keyCode == EventKeyboard::KeyCode::KEY_ENTER) {
 		if (catalog->isVisible()) {
 			if (arrowTimes == 2) {
@@ -382,11 +385,12 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 		}
 		if (endChoice->isVisible()) {
 			if (arrowTimes == 1) {
-
+				showend2();
 			}
 			else if (arrowTimes == 0) {
-
+				showend1();
 			}
+			endChoice->setVisible(false);
 		}
 	}
 	if (keyCode == EventKeyboard::KeyCode::KEY_UP_ARROW) {
@@ -1809,7 +1813,11 @@ void HelloWorld::playerGetHurt() {
 		auto playerActionComa = ((Player*)player->getUserData())->getActionPlayerComa();
 		auto action1 = Animate::create(playerActionShake);
 		auto action2 = Animate::create(playerActionComa);
-		auto seqAction = Sequence::create(action1, action2, NULL);
+		auto actionDone = CallFuncN::create([&](Ref* sender) {
+			showdie();
+		});
+		auto delay = DelayTime::create(3);
+		auto seqAction = Sequence::create(action1, action2, delay, actionDone,NULL);
 		stopAnimate();
 		player->runAction(seqAction);
 		playerState = 21;
@@ -1886,8 +1894,83 @@ void HelloWorld::showend1() {
 	movie->setTag(2);
 	movie->setPosition(camera->getPosition());
 	m_UI_Movie->addChild(movie);
-	auto op01 = Animate::create(loadAnimateByTime("movie//01_op//01-op-01.gif", 2, false));
-	auto times = op01->getAnimation()->getTotalDelayUnits();
+
+	auto endA01 = Animate::create(loadAnimateByTime("movie//03_end_1//03-endA-01.gif", 1, false));
+	auto times = endA01->getAnimation()->getTotalDelayUnits();
 	auto repeattime01 = 2.0 / (times*(1.0 / 30));
-	auto repeat01 = Repeat::create(op01, repeattime01);
+	auto repeat01 = Repeat::create(endA01, repeattime01);
+
+	auto endA02 = Animate::create(loadAnimateByTime("movie//03_end_1//03-endA-02.gif", 1, false));
+	times = endA02->getAnimation()->getTotalDelayUnits();
+	auto repeattime02 = 2.0 / (times*(1.0 / 30));
+	auto repeat02 = Repeat::create(endA02, repeattime02);
+
+	auto endA03 = Animate::create(loadAnimateByTime("movie//03_end_1//03-endA-03.gif", 1, false));
+	times = endA03->getAnimation()->getTotalDelayUnits();
+	auto repeattime03 = 2.0 / (times*(1.0 / 30));
+	auto repeat03 = Repeat::create(endA03, repeattime03);
+
+	auto endA04 = Animate::create(loadAnimateByTime("movie//03_end_1//03-endA-04.gif", 1, false));
+	times = endA04->getAnimation()->getTotalDelayUnits();
+	auto repeattime04 = 200.0 / (times*(1.0 / 30));
+	auto repeat04 = Repeat::create(endA04, repeattime04);
+
+	auto seqa = Sequence::create(repeat01, repeat02, repeat03, repeat04, NULL);
+	auto repeatForever = RepeatForever::create(seqa);
+	movie->runAction(repeatForever);
+}
+
+void HelloWorld::showend2() {
+	Sprite* movie = Sprite::create();
+	movie->setTag(3);
+	movie->setPosition(camera->getPosition());
+	m_UI_Movie->addChild(movie);
+
+	auto endA01 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-01.gif", 1, false));
+	auto times = endA01->getAnimation()->getTotalDelayUnits();
+	auto repeattime01 = 2.0 / (times*(1.0 / 30));
+	auto repeat01 = Repeat::create(endA01, repeattime01);
+
+	auto endA02 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-02.gif", 1, false));
+	times = endA02->getAnimation()->getTotalDelayUnits();
+	auto repeattime02 = 2.0 / (times*(1.0 / 30));
+	auto repeat02 = Repeat::create(endA02, repeattime02);
+
+	auto endA03 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-02.gif", 1, false));
+	times = endA03->getAnimation()->getTotalDelayUnits();
+	auto repeattime03 = 2.0 / (times*(1.0 / 30));
+	auto repeat03 = Repeat::create(endA03, repeattime03);
+
+	auto endA04 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-04.gif", 1, false));
+	times = endA04->getAnimation()->getTotalDelayUnits();
+	auto repeattime04 = 2.0 / (times*(1.0 / 30));
+	auto repeat04 = Repeat::create(endA04, repeattime04);
+
+	auto endA05 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-05.gif", 1, false));
+	times = endA05->getAnimation()->getTotalDelayUnits();
+	auto repeattime05 = 2.0 / (times*(1.0 / 30));
+	auto repeat05 = Repeat::create(endA05, repeattime05);
+
+	auto endA06 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-06.gif", 1, false));
+	times = endA06->getAnimation()->getTotalDelayUnits();
+	auto repeattime06 = 2.0 / (times*(1.0 / 30));
+	auto repeat06 = Repeat::create(endA06, repeattime06);
+
+	auto endA07 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-07.gif", 1, false));
+	times = endA07->getAnimation()->getTotalDelayUnits();
+	auto repeattime07 = 200.0 / (times*(1.0 / 30));
+	auto repeat07 = Repeat::create(endA07, repeattime07);
+
+	auto seqa = Sequence::create(repeat01, repeat02, repeat03, repeat04, repeat05, repeat06, repeat07, NULL);
+	movie->runAction(seqa);
+}
+void HelloWorld::showdie() {
+	Sprite* movie = Sprite::create();
+	movie->setTag(4);
+	movie->setPosition(camera->getPosition());
+	m_UI_Movie->addChild(movie);
+
+	auto die = Animate::create(loadAnimateByTime("movie//05_lose//05-lose.gif", 1, false));
+	auto repeat = RepeatForever::create(die);
+	movie->runAction(repeat);
 }
