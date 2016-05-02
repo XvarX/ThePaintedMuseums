@@ -549,6 +549,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 
 					SimpleAudioEngine::getInstance()->playEffect("Music//A.mp3");
 					rootNode->getChildByName("Door")->removeChildByName("Wall_TEMP_12");
+					itemsVectorInMap.eraseObject(projectile);
 				}
 			}
 		}
@@ -567,9 +568,20 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							object->setState(-1);
 							rootNode->getChildByName("Door")->removeChildByName("Door001");
 							auto posZone4 = rootNode->getChildByName("Zone")->getChildByName("Zone004");
-							auto princess = (Sprite*)m_UI_Game->getChildByName("princess");
+							auto princessMoveDone = CallFuncN::create([&](Ref* sender) {
+								Animate* prstand_ = Animate::create(prstand);
+								princess->stopAllActions();
+								princess->runAction(prstand_);
+							});
+							Animate* prstand_ = Animate::create(prstand);
+							princess->stopAllActions();
+							princess->setFlipX(true);
+							auto princessWalk = Animate::create(((Princess*)princess->getUserData())->getActionWalk());
+							princess->runAction(princessWalk);
+							auto moveTo = MoveTo::create(5.0, Point(posZone4->getPosition().x, princess->getPosition().y));
+							auto seq = Sequence::create(moveTo, princessMoveDone, NULL);
+							princess->runAction(seq);
 
-							princess->runAction(MoveTo::create(5.0, Point(posZone4->getPosition().x, princess->getPosition().y)));
 							auto window = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object001");
 							auto delayaction = DelayTime::create(1);
 							auto actionDone = CallFuncN::create([&](Ref* sender) {
@@ -999,6 +1011,36 @@ void HelloWorld::conTact(float delta) {
 					rootNode->getChildByName("Object")->removeChildByName("Object011");
 					auto zone009 = rootNode->getChildByName("Zone")->getChildByName("Zone009");
 					setPlayerPositionByZone(mom, zone009);
+
+					auto actionDone = CallFuncN::create([&](Ref* sender) {
+						auto actionDone = CallFuncN::create([&](Ref* sender) {
+							auto actionDone = CallFuncN::create([&](Ref* sender) {
+								princess->stopAllActions();
+								auto princessStand = Animate::create(((Princess*)princess->getUserData())->getActionStand());
+								princess->runAction(princessStand);
+							});
+							princess->stopAllActions();
+							princess->setFlipX(false);
+							auto princessWalk = Animate::create(((Princess*)princess->getUserData())->getActionWalk());
+							princess->runAction(princessWalk);
+							auto moveto2 = MoveTo::create(1.5, rootNode->getChildByName("Zone")->getChildByName("Zone008")->getPosition());
+							auto seq = Sequence::create(moveto2, actionDone, NULL);
+							princess->runAction(seq);
+						});
+						princess->stopAllActions();
+						auto princessDownStair = Animate::create(((Princess*)princess->getUserData())->getActionPriDownStair());
+						princess->runAction(princessDownStair);
+						auto moveto2 = MoveTo::create(3, rootNode->getChildByName("Zone")->getChildByName("Zone015")->getPosition());
+						auto seq = Sequence::create(moveto2, actionDone, NULL);
+						princess->runAction(seq);
+					});
+					princess->stopAllActions();
+					auto princessWalk = Animate::create(((Princess*)princess->getUserData())->getActionWalk());
+					princess->runAction(princessWalk);
+					auto moveto1 = MoveTo::create(1, rootNode->getChildByName("Zone")->getChildByName("Zone014")->getPosition());
+					auto seq = Sequence::create(moveto1, actionDone, NULL);
+					princess->runAction(seq);
+					
 				}
 			}
 			if (projectile->getName() == "Event010") {
@@ -1626,6 +1668,7 @@ void HelloWorld::princesscomming() {
 			canmove = true;
 		});
 		canmove = false;
+		princess->stopAllActions();
 		Animate* princessKao = Animate::create(prkao);
 		Animate* princessTalk = Animate::create(prtalk);
 		Animate* princessThrow = Animate::create(prthrow);
@@ -1720,6 +1763,11 @@ void HelloWorld::initActor() {
 	Dad* newDad = new Dad("Dad", 2);
 	player->setUserData(newPlayer);
 	princess->setUserData(newPrincess);
+
+	Animate* prstand_ = Animate::create(prstand);
+	princess->stopAllActions();
+	princess->runAction(prstand_);
+
 	dad->setUserData(newDad);
 }
 

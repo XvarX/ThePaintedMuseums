@@ -51,12 +51,16 @@ void Actor::setState(int _state) {
 Princess::Princess(string ActorName, int ActorNumber) :Actor(ActorName, ActorNumber) {
 	priRelyOn = initAnimationByName("priRelyOn", 1, false);
 	priThrow = initAnimationByName("priThrow", 1, false);
+	priDownStair = initAnimationByName("priDownStair", -1, false);
 }
 Animation* Princess::getActionPriRelyOn() {
 	return priRelyOn;
 }
 Animation* Princess::getActionPriThrow() {
 	return priThrow;
+}
+Animation* Princess::getActionPriDownStair() {
+	return priDownStair;
 }
 
 //Derived Dad Class

@@ -39,9 +39,11 @@ public:
 	Princess(string ActorNmae, int ActorNumber);
 	Animation* getActionPriRelyOn();
 	Animation* getActionPriThrow();
+	Animation* getActionPriDownStair();
 private:
 	Animation* priRelyOn;
 	Animation* priThrow;
+	Animation* priDownStair;
 };
 
 //Derived Dad Class
