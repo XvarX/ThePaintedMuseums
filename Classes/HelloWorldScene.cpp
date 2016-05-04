@@ -160,7 +160,7 @@ void HelloWorld::setGame() {
 	setPlayerPositionByZone(princess, zone002);
 	camera = Sprite::create("camera.jpg");
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
-	//player->setPosition(Vec2(2200, 1200));
+	player->setPosition(Vec2(2200, 1200));
 
 	dad->setName("Dad");
 	auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
@@ -170,8 +170,8 @@ void HelloWorld::setGame() {
 	mom->setName("mom");
 	mom->setPosition(-100, -100);
 	m_UI_Game->addChild(mom);
-	m_UI_Game->addChild(rootNode);
-	m_UI_Game->addChild(player);
+	m_UI_Game->addChild(rootNode,2);
+	m_UI_Game->addChild(player,1);
 	m_UI_Game->addChild(princess);
 	m_UI_Game->addChild(dad);
 	m_UI_Game->addChild(camera);
@@ -311,6 +311,7 @@ bool HelloWorld::init()
 	die = false;
 	onxiepo = false;
 	canmove = true;
+	end = false;
 	Location = false;
 	playingAction = false;
 	changingTool = false;
@@ -362,8 +363,18 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 	if (m_UI_Dialog->getChildrenCount() > 0) {
 		m_UI_Dialog->removeAllChildren();
 		if (dialogStack.empty()) {
-			canmove = true;
+			if (!end) {
+				canmove = true;
+			}
 			cameramove = false;
+		}
+		if (end) {
+			endChoice->setPosition(camera->getPosition());
+			bigArrow->setPosition(camera->getPosition() + Vec2(-400, 118));
+			endChoice->setVisible(true);
+			bigArrow->setVisible(true);
+			canmove = false;
+			arrowTimes = 0;
 		}
 	}
 	if (m_UI_Movie->getChildByTag(1) != NULL) {
@@ -1056,12 +1067,30 @@ void HelloWorld::conTact(float delta) {
 			if (projectile->getName() == "Event012") {
 				auto object = (Construct*)projectile->getUserData();
 				if (object->getState() == 0) {
+					princess->setPosition(rootNode->getChildByName("Zone")->getChildByName("Zone016")->getPosition());
+					princess->stopAllActions();
+					Animate* princessWalk = Animate::create(((Princess*)princess->getUserData())->getActionWalk());
+					princess->runAction(princessWalk);
+
+					auto actionDone = CallFuncN::create([&](Ref* sender) {
+						princess->stopAllActions();
+						Animate* princessStand = Animate::create(((Princess*)princess->getUserData())->getActionStand());
+						princess->runAction(princessStand);
+						PopScene * popLayer = PopScene::create("UI//B.png", "千金:那么我们就在这里分别吧，我要从那边的树林捷径里穿过去，再见啦大姐姐~", 1);
+						popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+						m_UI_Dialog->addChild(popLayer);
+
+					});
+					auto moveTo = MoveTo::create(3, rootNode->getChildByName("Zone")->getChildByName("Zone017")->getPosition());
+					auto seq = Sequence::create(moveTo, actionDone, NULL);
+					princess->runAction(seq);
+
+					player->stopAllActions();
+					Animate* playerStand = Animate::create(((Player*)player->getUserData())->getActionStand());
+					player->runAction(playerStand);
 					object->setState(-1);
-					endChoice->setPosition(camera->getPosition());
-					bigArrow->setPosition(camera->getPosition() + Vec2(-400, 118));
-					endChoice->setVisible(true);
-					bigArrow->setVisible(true);
-					arrowTimes = 0;
+					playerState = -1;
+					end = true;
 					canmove = false;
 				}
 			}

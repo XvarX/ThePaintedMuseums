@@ -109,6 +109,7 @@ private:
 	bool onStair;
 	bool onxiepo;
 	bool standBy;
+	bool end;
 	bool changingTool;
 	bool Location; // false = left  right = true
 	float rotation;
