@@ -1,7 +1,9 @@
 #include "ObjectMy.h"
+#include <string>
+#include "SimpleAudioEngine.h"
 #include<iostream>
 using namespace std;
-
+using namespace CocosDenshion;
 ObjectMy::ObjectMy() {
 
 }
@@ -19,6 +21,8 @@ ObjectMy::ObjectMy(string ObjectNmae, int ObjectNumber, bool back,bool damage_, 
 										// ´´½¨¶¯»­
 	actionplay = GifAnimation::getInstance()->createAnimation(*def);
 	damage = damage_;
+	state = 0;
+	preloadVoice();
 }
 string ObjectMy::getObjectName() {
 	return Name;
@@ -69,4 +73,23 @@ void ObjectMy::changeObjectAction(int i, bool back, int times_) {
 
 Animation* ObjectMy::getActionbyindex(int i) {
 	return actionVector.at(i);
+}
+
+void ObjectMy::setState(int i) {
+	state = i;
+}
+
+int ObjectMy::getState() {
+	return state;
+}
+
+void ObjectMy::preloadVoice() {
+	string voicePath = "object//" + Name + "//voice.mp3";
+	auto acPath = voicePath.c_str();
+	SimpleAudioEngine::getInstance()->preloadEffect(acPath);
+}
+void ObjectMy::playVoice() {
+	string voicePath = "object//" + Name + "//voice.mp3";
+	auto acPath = voicePath.c_str();
+	SimpleAudioEngine::getInstance()->playEffect(acPath);
 }

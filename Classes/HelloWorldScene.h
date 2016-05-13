@@ -63,6 +63,8 @@ public:
 	void conTact(float delta);
 	void showDialog(float delta);
 	void playerAction();
+	void preLoad();
+	void setJudgement();
 	void canMove(float delta);
 	void showItem(string ItemName);
 	void showTool(string ItemName);
@@ -100,6 +102,7 @@ private:
 	ProgressTimer* SoundTimer;
 	string itemName;
 	Sprite* background;
+	Sprite* stairground_1;
 	PhysicsWorld* m_world;
 	unsigned char *c_data;
 	bool droping;
@@ -171,16 +174,20 @@ private:
 	Vector<Node*> usefulObjectsVector;
 	Vector<Node*> StandBysVector;
 	Vector<Node*> XieposVector;
+	Vector<Node*> doorObjectsVector;
 	Vector<PopScene*> dialogStack;
+	vector<string> dialogPath;
 	Sprite* camera;
 	Sprite* tempitem;
 	Layer* m_UI_Movie;          //电影层 最最上层
 	Layer* m_UI_Dialog;			//对话框层 最高层
 	Layer* m_UI_Tool;			//工具栏层 次高层
+	Layer* m_UI_Frontground;
 	Layer* m_UI_Player;         //玩家层 再次高层
 	Layer* m_UI_Game;			//游戏层 低层
 	Layer* m_UI_Background;		//背景层 底层
 	Layer* m_UI_Afterall;       //暗黑层 不应该存在层
+	Layer* m_UI_preLoad;        //预处理层
 };
 
 #endif // __HELLOWORLD_SCENE_H__

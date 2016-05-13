@@ -18,12 +18,17 @@ public:
 	void changeObjectAction(int i, bool back, int time);
 	bool isDamage();
 	void pushActionVector(int i, bool back, int time);
+	int getState();
+	void setState(int i);
 	Animation* getActionbyindex(int i);
+	void preloadVoice();
+	void playVoice();
 private:
 	string Name;
 	bool damage;
 	int Number;
 	Animation* actionplay;
 	Vector<Animation*> actionVector;
+	int state;
 };
 #endif

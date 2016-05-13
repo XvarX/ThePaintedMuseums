@@ -27,7 +27,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
     if(!glview) {
-        glview = GLViewImpl::createWithRect("HelloCpp", Rect(0, 0, 1920, 1080));
+		glview = GLViewImpl::createWithRect("HelloCpp", Rect(0, 0, 1920, 1080));
         director->setOpenGLView(glview);
     }
 
@@ -45,6 +45,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto scene = HelloWorld::createScene();
     // run
     director->runWithScene(scene);
+
 
     return true;
 }
