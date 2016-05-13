@@ -183,6 +183,11 @@ void HelloWorld::setGame() {
 	mom->setName("mom");
 	mom->setPosition(-100, -100);
 
+
+	auto takeshower = loadAnimate("Actor//Mom//shower.gif", -1, false);
+	auto showerAnimate = Animate::create(takeshower);
+	mom->runAction(showerAnimate);
+
 	m_UI_Game->addChild(mom);
 	m_UI_Game->addChild(rootNode);
 	m_UI_Game->addChild(player);
@@ -280,6 +285,10 @@ bool HelloWorld::initLayer() {
 	m_UI_Movie->setPosition(origin);
 	this->addChild(m_UI_Movie, 60);
 
+	m_UI_jiaocheng = Layer::create();
+	m_UI_jiaocheng->setPosition(origin);
+	this->addChild(m_UI_jiaocheng, 50);
+
 	m_UI_Dialog = Layer::create();
 	m_UI_Dialog->setPosition(origin);
 	this->addChild(m_UI_Dialog, 50);
@@ -325,11 +334,13 @@ bool HelloWorld::init()
 	dropspeed = 0;
 	arrowTimes = 0;
 	bigArrowTimes = 0;
+	jiaocheng = 0;
 	droping = false;
 	kailouti = false;
 	cameramove = false;
 	jumping = false;
 	onStair = false;
+	voiceId = 0;
 	standBy = false;
 	die = false;
 	onxiepo = false;
@@ -398,11 +409,18 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 		auto objectAction = objectData->objectplay();
 		Animate* objectPlay = Animate::create(objectAction);
 		object->runAction(objectPlay);
+
+		auto follow2 = Follow::create(camera);
 		this->runAction(follow);
+
+		m_UI_jiaocheng->setPosition(Vec2(camera->getPosition()));
+
 		SimpleAudioEngine::getInstance()->stopAllEffects();
 		SimpleAudioEngine::getInstance()->playBackgroundMusic("Music//BGM.mp3", true);
+
+		showJiaocheng("jiaocheng//01.png");
 	}
-	if (m_UI_Movie->getChildByTag(2) != NULL || m_UI_Movie->getChildByTag(3) != NULL || m_UI_Movie->getChildByTag(4) != NULL) {
+	if (m_UI_Movie->getChildByTag(4) != NULL) {
 		reStartGame();
 	}
 	if (keyCode == EventKeyboard::KeyCode::KEY_ENTER) {
@@ -514,6 +532,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			auto tool = playerdata->getHoldingTool();
 			if (tool != NULL) {
 				showTool(tool->getToolName());
+				string voicepath = "Music//" + tool->getToolName() + ".mp3";
+				auto voicePathToChar = voicepath.c_str();
+				SimpleAudioEngine::getInstance()->playEffect(voicePathToChar);
 			}
 		}
 	}
@@ -524,6 +545,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			auto tool = playerdata->getHoldingTool();
 			if (tool != NULL) {
 				showTool(tool->getToolName());
+				string voicepath = "Music//" + tool->getToolName() + ".mp3";
+				auto voicePathToChar = voicepath.c_str();
+				SimpleAudioEngine::getInstance()->playEffect(voicePathToChar);
 			}
 		}
 	}
@@ -583,6 +607,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					Tool->setPosition(Vec2(505 + ((PlayerData->getHoldingToolsNum() - 1) * 130), 80));
 					itemMenu->addChild(Tool);
 
+					SimpleAudioEngine::getInstance()->stopAllEffects();
 					SimpleAudioEngine::getInstance()->playEffect("Music//A.mp3");
 					rootNode->getChildByName("Door")->removeChildByName("Wall_TEMP_12");
 					itemsVectorInMap.eraseObject(projectile);
@@ -665,7 +690,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						auto objectAction = objectData->objectplay();
 						Animate* objectPlay = Animate::create(objectAction);
 						object->runAction(objectPlay);
-
+						objectData->playVoice();
 						auto playerActionSearch = ((Player*)player->getUserData())->getActionPlayerSearch();
 						playerAction(playerActionSearch, 17, "bucket");
 					}
@@ -689,6 +714,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								auto objectAction = objectData->objectplay();
 								Animate* objectPlay = Animate::create(objectAction);
 								object->runAction(objectPlay);
+								objectData->playVoice();
 							});
 							auto playerActionAtticOpen = ((Player*)player->getUserData())->getActionPlayerAtticOpen();
 							Animate* playerAction = Animate::create(playerActionAtticOpen);
@@ -707,6 +733,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							if (m_UI_Dialog->getChildrenCount() == 0) {
 								m_UI_Dialog->addChild(popLayer);
 								newdialog = true;
+								SimpleAudioEngine::getInstance()->stopAllEffects();
+								SimpleAudioEngine::getInstance()->playEffect("ActorVoice//GuaGua//GuaGua02.mp3");
 							}
 						}
 					}
@@ -726,6 +754,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						auto objectAction = objectData->objectplay();
 						Animate* objectPlay = Animate::create(objectAction);
 						object->runAction(objectPlay);
+						objectData->playVoice();
 
 
 					}
@@ -744,8 +773,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							auto object015 = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object015");
 							object016->runAction(fadeout);
 							object015->runAction(fadeout2);
-
-
+							auto objectData = (ObjectMy*)object016->getUserData();
+							objectData->playVoice();
+							SimpleAudioEngine::getInstance()->playEffect("Music//throw.mp3");
 						}
 						else {
 							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
@@ -755,7 +785,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							if (m_UI_Dialog->getChildrenCount() == 0) {
 								newdialog = true;
 								m_UI_Dialog->addChild(popLayer);
+								SimpleAudioEngine::getInstance()->stopAllEffects();
+								SimpleAudioEngine::getInstance()->playEffect("ActorVoice//GuaGua//GuaGua03.mp3");
 							}
+
 						}
 					}
 				}
@@ -784,13 +817,28 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							rootNode->getChildByName("Door")->removeChildByName("Door004");
 
 							auto playerActionDoorOpen = ((Player*)player->getUserData())->getActionPlayerDoorOpen();
-							playerAction(playerActionDoorOpen, 12);
-
-							auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object019");
-							auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
-							auto objectAction = objectData->objectplay();
-							Animate* objectPlay = Animate::create(objectAction);
-							object->runAction(objectPlay);
+							auto playerDoorOpenAction = Animate::create(playerActionDoorOpen);
+							auto actionDone = CallFuncN::create([&](Ref* sender) {
+								auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object019");
+								auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
+								auto objectAction = objectData->objectplay();
+								Animate* objectPlay = Animate::create(objectAction);
+								object->runAction(objectPlay);
+								playerState = -1;
+								PopScene * popLayer = PopScene::create("UI//B.png", "糕糕:哈哈太好啦，我现在能逃出去了！不对…糟了，我爸爸在楼下呢！你能想点办法支开他吗？", 1);
+								popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
+								if (m_UI_Dialog->getChildrenCount() == 0) {
+									newdialog = true;
+									m_UI_Dialog->addChild(popLayer);
+									SimpleAudioEngine::getInstance()->stopAllEffects();
+									SimpleAudioEngine::getInstance()->playEffect("ActorVoice//GaoGao//GaoGao04.mp3");
+								}
+							});
+							auto seq = Sequence::create(playerDoorOpenAction, actionDone, NULL);
+							seq->setTag(12);
+							stopAnimate();
+							player->runAction(seq);
+							playerState = 12;
 						}
 						else {
 							auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
@@ -817,6 +865,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						auto objectAction = objectData->objectplay();
 						Animate* objectPlay = Animate::create(objectAction);
 						object->runAction(objectPlay);
+						objectData->playVoice();
 					}
 				}
 				if (projectile->getName() == "Object025") {
@@ -843,6 +892,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								action->setTag(13);
 								player->runAction(action);
 								playerState = 13;
+								SimpleAudioEngine::getInstance()->playEffect("Music//throw.mp3");
 							}
 							else {
 								auto playerActionNoidea = ((Player*)player->getUserData())->getActionPlayerNoIdea();
@@ -878,6 +928,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 									auto fireaction1 = Animate::create(objectData->getActionbyindex(0));
 									auto fireaction2 = Animate::create(objectData->getActionbyindex(1));
 									auto seq = Sequence::create(fireaction1, fireaction2, NULL);
+									SimpleAudioEngine::getInstance()->playEffect("object//Object025//voice2.mp3");
 									object->runAction(seq);
 									playerState = -1;
 								});
@@ -888,6 +939,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								action->setTag(14);
 								player->runAction(action);
 								playerState = 14;
+								auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object025");
+								auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
+								objectData->playVoice();
 
 								PopScene * popLayer1 = PopScene::create("UI//C.png", "不一一一一一一一一一！！我的书啊！！！", 1);
 								popLayer1->setPosition(camera->getPosition() + Vec2(0, -250));
@@ -898,6 +952,12 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 								dialogStack.pushBack(popLayer3);
 								dialogStack.pushBack(popLayer2);
 								dialogStack.pushBack(popLayer1);
+								string dialogpath3 = "ActorVoice//GaoGao//GaoGao06.mp3";
+								dialogPath.push_back(dialogpath3);
+								string dialogpath2 = "ActorVoice//GaoGao//GaoGao05.mp3";
+								dialogPath.push_back(dialogpath2);
+								string dialogpath1 = "ActorVoice//Dad//Dad03.mp3";
+								dialogPath.push_back(dialogpath1);
 
 							}
 							else {
@@ -923,6 +983,11 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 						popLayer2->setPosition(camera->getPosition() + Vec2(0, -250));
 						dialogStack.pushBack(popLayer2);
 						dialogStack.pushBack(popLayer1);
+
+						string dialogpath2 = "ActorVoice//GaoGao//GaoGao07.mp3";
+						dialogPath.push_back(dialogpath2);
+						string dialogpath1 = "ActorVoice//Mom//Mom02.mp3";
+						dialogPath.push_back(dialogpath1);
 
 						auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object026");
 						auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
@@ -955,6 +1020,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				auto action = Animate::create(a);
 				projectile->stopAllActions();
 				projectile->runAction(action);
+				object->playVoice();
 			}
 		}
 
@@ -969,6 +1035,10 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				projectile->runAction(action);
 				object->playVoice();
 				playerGetHurt();
+
+				if (jiaocheng == 3) {
+					showJiaocheng("jiaocheng//04.png");
+				}
 			}
 		}
 
@@ -980,6 +1050,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				if (m_UI_Dialog->getChildrenCount() == 0) {
 					newdialog = true;
 					m_UI_Dialog->addChild(popLayer);
+					SimpleAudioEngine::getInstance()->stopAllEffects();
+					SimpleAudioEngine::getInstance()->playEffect("ActorVoice//Dad//Dad01.mp3");
 				}
 			}
 			else {
@@ -988,6 +1060,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				if (m_UI_Dialog->getChildrenCount() == 0) {
 					newdialog = true;
 					m_UI_Dialog->addChild(popLayer);
+					SimpleAudioEngine::getInstance()->stopAllEffects();
+					SimpleAudioEngine::getInstance()->playEffect("ActorVoice//Dad//Dad02.mp3");
 				}
 			}
 		}
@@ -997,6 +1071,8 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			if (m_UI_Dialog->getChildrenCount() == 0) {
 				newdialog = true;
 				m_UI_Dialog->addChild(popLayer);
+				SimpleAudioEngine::getInstance()->stopAllEffects();
+				SimpleAudioEngine::getInstance()->playEffect("ActorVoice//Mom//Mom01.mp3");
 			}
 		}
 	}
@@ -1041,6 +1117,9 @@ void HelloWorld::conTact(float delta) {
 		Sprite *projectile = (CCSprite *)itemsVectorInMap.at(i);
 		if (player->boundingBox().intersectsRect(projectile->boundingBox()) && (abs(player->getPosition().x - projectile->getPosition().x) < 100)) {
 			find->setVisible(true);
+			if (jiaocheng == 1) {
+				showJiaocheng("jiaocheng//02.png");
+			}
 		}
 	}
 
@@ -1050,6 +1129,11 @@ void HelloWorld::conTact(float delta) {
 			auto object = (Construct*)projectile->getUserData();
 			if (object->getState() != -1) {
 				find->setVisible(true);
+				if (projectile->getName() == "Object001") {
+					if (jiaocheng == 2) {
+						showJiaocheng("jiaocheng//03.png");
+					}
+				}
 			}
 		}
 	}
@@ -1129,7 +1213,8 @@ void HelloWorld::conTact(float delta) {
 					rootNode->getChildByName("Object")->removeChildByName("Object011");
 					auto zone009 = rootNode->getChildByName("Zone")->getChildByName("Zone009");
 					setPlayerPositionByZone(mom, zone009);
-
+					rootNode->getChildByName("DamageObject")->removeChildByName("Object011");
+					
 					auto actionDone = CallFuncN::create([&](Ref* sender) {
 						auto actionDone = CallFuncN::create([&](Ref* sender) {
 							auto actionDone = CallFuncN::create([&](Ref* sender) {
@@ -1186,6 +1271,9 @@ void HelloWorld::conTact(float delta) {
 						PopScene * popLayer = PopScene::create("UI//B.png", "千金:那么我们就在这里分别吧，我要从那边的树林捷径里穿过去，再见啦大姐姐~", 1);
 						popLayer->setPosition(camera->getPosition() + Vec2(0, -250));
 						m_UI_Dialog->addChild(popLayer);
+
+						SimpleAudioEngine::getInstance()->stopAllEffects();
+						SimpleAudioEngine::getInstance()->playEffect("ActorVoice//GaoGao//GaoGao08.mp3");
 
 					});
 					auto moveTo = MoveTo::create(3, rootNode->getChildByName("Zone")->getChildByName("Zone017")->getPosition());
@@ -1459,7 +1547,7 @@ void HelloWorld::update(float dt)
 	auto findPos = player->getPosition() + Vec2(80, 140);
 	itemMenu->setPosition(itemMenuPos);
 	find->setPosition(findPos);
-
+	m_UI_jiaocheng->setPosition(Vec2(camera->getPosition()));
 }
 void HelloWorld::changeLocation(float dt) {
 	if (Location != player->isFlippedX()) {
@@ -1797,7 +1885,9 @@ void HelloWorld::playerAction(Animation* paction, int i, string Name) {
 		auto allaction = Sequence::create(getAction, getactionDone, NULL);
 		player->runAction(allaction);
 		showItem(itemName);
-
+		string voicepath = "Music//" + itemName + ".mp3";
+		auto voicePathToChar = voicepath.c_str();
+		SimpleAudioEngine::getInstance()->playEffect(voicePathToChar);
 	});
 	canmove = false;
 	Animate* playerTempAction = Animate::create(paction);
@@ -1807,6 +1897,10 @@ void HelloWorld::playerAction(Animation* paction, int i, string Name) {
 	itemName = Name;
 	player->runAction(action);
 	playerState = i;
+	if (jiaocheng == 4) {
+		showJiaocheng("jiaocheng//05.png");
+	}
+	
 }
 void HelloWorld::princesscomming() {
 	auto cameraMoveDone = CallFuncN::create([&](Ref* sender) {
@@ -1916,6 +2010,7 @@ void HelloWorld::initActor() {
 	princess = Sprite::create("princess.png");
 	dad = Sprite::create("dad.png");
 	mom = Sprite::create("mom.png");
+
 	Player* newPlayer = new Player("Player", 0);
 	Princess* newPrincess = new Princess("Princess", 1);
 	Dad* newDad = new Dad("Dad", 2);
@@ -1973,8 +2068,12 @@ void HelloWorld::showDialog(float delta) {
 			m_UI_Dialog->addChild(dia);
 			dialogStack.popBack();
 			auto voicepath = dialogPath.back().c_str();
-			SimpleAudioEngine::getInstance()->playEffect(voicepath);
+			SimpleAudioEngine::getInstance()->stopEffect(voiceId);
+			voiceId = SimpleAudioEngine::getInstance()->playEffect(voicepath);
 			dialogPath.pop_back();
+		}
+		else {
+			voiceId = 0;
 		}
 	}
 }
@@ -2005,7 +2104,18 @@ void HelloWorld::preloadMusic() {
 	SimpleAudioEngine::getInstance()->preloadEffect("Music//V27.mp3");
 
 	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao01.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao02.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao03.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao04.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao05.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao06.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao07.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao08.mp3");
+
+
 	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GuaGua//GuaGua01.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GuaGua//GuaGua02.mp3");
+	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GuaGua//GuaGua03.mp3");
 }
 void HelloWorld::playerGetHurt() {
 	auto playerData = (Player*)player->getUserData();
@@ -2029,13 +2139,70 @@ void HelloWorld::playerGetHurt() {
 		auto actionDone = CallFuncN::create([&](Ref* sender) {
 			showdie();
 		});
-		auto delay = DelayTime::create(3);
+		auto delay = DelayTime::create(1.5);
 		auto seqAction = Sequence::create(action1, action2, delay, actionDone, NULL);
 		stopAnimate();
 		player->runAction(seqAction);
 		playerState = 21;
 		die = true;
 	}
+}
+void HelloWorld::reStartGameWithOP() {
+	_eventDispatcher->removeAllEventListeners();
+	this->removeAllChildren();
+	moveV = -200 * 1.3*1.5;
+	rotation = 0;
+	playerState = 0;
+	dropspeed = 0;
+	arrowTimes = 0;
+	bigArrowTimes = 0;
+	droping = false;
+	kailouti = false;
+	cameramove = false;
+	jumping = false;
+	onStair = false;
+	standBy = false;
+	die = false;
+	onxiepo = false;
+	canmove = true;
+	end = false;
+	Location = false;
+	playingAction = false;
+	changingTool = false;
+	rootNode = CSLoader::createNode("MainScene.csb");
+	CCSpriteFrameCache *pFrameCache = CCSpriteFrameCache::sharedSpriteFrameCache();
+	pFrameCache->addSpriteFramesWithFile("UI//Plist1.plist");
+	initLayer();
+	initAnimate();
+	initItemMenu();
+	initActor();
+	setScene();
+	setGame();
+	configPhy();
+
+	configSchedule();
+	configEventListener();
+	preloadMusic();
+	initop();
+	//preLoad();
+	auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object016");
+	auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
+	auto objectAction = objectData->objectplay();
+	Animate* objectPlay = Animate::create(objectAction);
+	object->runAction(objectPlay);
+	auto object031 = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object031");
+	auto objectData031 = (ObjectMy*)(((Sprite*)object031)->getUserData());
+	auto objectAction031 = objectData031->objectplay();
+	Animate* objectPlay031 = Animate::create(objectAction031);
+	object031->runAction(objectPlay031);
+
+	auto a = player->getPosition() + Vec2(384.0, 216.0) + (!Location)*Vec2(-768, 0);
+	camera->setPosition(Vec2(0,0));
+	auto temp = Sprite::create();
+	temp->setPosition(960, 540);
+	m_UI_Game->addChild(temp);
+	auto follow = Follow::create(temp);
+	this->runAction(follow);
 }
 
 void HelloWorld::reStartGame() {
@@ -2092,6 +2259,10 @@ void HelloWorld::reStartGame() {
 	auto follow = Follow::create(camera);
 	this->runAction(follow);
 	//event listener
+
+	SimpleAudioEngine::getInstance()->stopAllEffects();
+	SimpleAudioEngine::getInstance()->stopBackgroundMusic();
+	SimpleAudioEngine::getInstance()->playBackgroundMusic("Music//BGM.mp3", true);
 
 }
 void HelloWorld::initop() {
@@ -2155,6 +2326,8 @@ void HelloWorld::initop() {
 	SimpleAudioEngine::getInstance()->playEffect("MovieMusic//op01.mp3");
 }
 void HelloWorld::showend1() {
+	SimpleAudioEngine::getInstance()->stopBackgroundMusic();
+	SimpleAudioEngine::getInstance()->playEffect("MovieMusic//end01.mp3");
 	Sprite* movie = Sprite::create();
 	movie->setTag(2);
 	movie->setPosition(camera->getPosition());
@@ -2162,30 +2335,35 @@ void HelloWorld::showend1() {
 
 	auto endA01 = Animate::create(loadAnimateByTime("movie//03_end_1//03-endA-01.gif", 1, false));
 	auto times = endA01->getAnimation()->getTotalDelayUnits();
-	auto repeattime01 = 2.0 / (times*(1.0 / 30));
+	auto repeattime01 = 4.3 / (times*(1.0 / 30));
 	auto repeat01 = Repeat::create(endA01, repeattime01);
 
 	auto endA02 = Animate::create(loadAnimateByTime("movie//03_end_1//03-endA-02.gif", 1, false));
 	times = endA02->getAnimation()->getTotalDelayUnits();
-	auto repeattime02 = 2.0 / (times*(1.0 / 30));
+	auto repeattime02 = 2.7 / (times*(1.0 / 30));
 	auto repeat02 = Repeat::create(endA02, repeattime02);
 
 	auto endA03 = Animate::create(loadAnimateByTime("movie//03_end_1//03-endA-03.gif", 1, false));
 	times = endA03->getAnimation()->getTotalDelayUnits();
-	auto repeattime03 = 2.0 / (times*(1.0 / 30));
+	auto repeattime03 = 10.0 / (times*(1.0 / 30));
 	auto repeat03 = Repeat::create(endA03, repeattime03);
 
 	auto endA04 = Animate::create(loadAnimateByTime("movie//03_end_1//03-endA-04.gif", 1, false));
 	times = endA04->getAnimation()->getTotalDelayUnits();
-	auto repeattime04 = 200.0 / (times*(1.0 / 30));
+	auto repeattime04 = 4.0 / (times*(1.0 / 30));
 	auto repeat04 = Repeat::create(endA04, repeattime04);
+	
+	auto actionDone = CallFuncN::create([&](Ref* sender) {
+		reStartGameWithOP();
+	});
 
-	auto seqa = Sequence::create(repeat01, repeat02, repeat03, repeat04, NULL);
-	auto repeatForever = RepeatForever::create(seqa);
-	movie->runAction(repeatForever);
+	auto seqa = Sequence::create(repeat01, repeat02, repeat03, repeat04, actionDone, NULL);
+	movie->runAction(seqa);
 }
 
 void HelloWorld::showend2() {
+	SimpleAudioEngine::getInstance()->stopBackgroundMusic();
+	SimpleAudioEngine::getInstance()->playEffect("MovieMusic//end02.mp3");
 	Sprite* movie = Sprite::create();
 	movie->setTag(3);
 	movie->setPosition(camera->getPosition());
@@ -2193,40 +2371,43 @@ void HelloWorld::showend2() {
 
 	auto endA01 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-01.gif", 1, false));
 	auto times = endA01->getAnimation()->getTotalDelayUnits();
-	auto repeattime01 = 2.0 / (times*(1.0 / 30));
+	auto repeattime01 = 7.3 / (times*(1.0 / 30));
 	auto repeat01 = Repeat::create(endA01, repeattime01);
 
 	auto endA02 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-02.gif", 1, false));
 	times = endA02->getAnimation()->getTotalDelayUnits();
-	auto repeattime02 = 2.0 / (times*(1.0 / 30));
+	auto repeattime02 = 1.0 / (times*(1.0 / 30));
 	auto repeat02 = Repeat::create(endA02, repeattime02);
 
 	auto endA03 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-02.gif", 1, false));
 	times = endA03->getAnimation()->getTotalDelayUnits();
-	auto repeattime03 = 2.0 / (times*(1.0 / 30));
+	auto repeattime03 = 2.3 / (times*(1.0 / 30));
 	auto repeat03 = Repeat::create(endA03, repeattime03);
 
 	auto endA04 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-04.gif", 1, false));
 	times = endA04->getAnimation()->getTotalDelayUnits();
-	auto repeattime04 = 2.0 / (times*(1.0 / 30));
+	auto repeattime04 = 6.3 / (times*(1.0 / 30));
 	auto repeat04 = Repeat::create(endA04, repeattime04);
 
 	auto endA05 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-05.gif", 1, false));
 	times = endA05->getAnimation()->getTotalDelayUnits();
-	auto repeattime05 = 2.0 / (times*(1.0 / 30));
+	auto repeattime05 = 2.7 / (times*(1.0 / 30));
 	auto repeat05 = Repeat::create(endA05, repeattime05);
 
 	auto endA06 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-06.gif", 1, false));
 	times = endA06->getAnimation()->getTotalDelayUnits();
-	auto repeattime06 = 2.0 / (times*(1.0 / 30));
+	auto repeattime06 = 4.0 / (times*(1.0 / 30));
 	auto repeat06 = Repeat::create(endA06, repeattime06);
 
 	auto endA07 = Animate::create(loadAnimateByTime("movie//04_end_2//04-endB-07.gif", 1, false));
 	times = endA07->getAnimation()->getTotalDelayUnits();
-	auto repeattime07 = 200.0 / (times*(1.0 / 30));
+	auto repeattime07 = 4.0 / (times*(1.0 / 30));
 	auto repeat07 = Repeat::create(endA07, repeattime07);
 
-	auto seqa = Sequence::create(repeat01, repeat02, repeat03, repeat04, repeat05, repeat06, repeat07, NULL);
+	auto actionDone = CallFuncN::create([&](Ref* sender) {
+		reStartGameWithOP();
+	});
+	auto seqa = Sequence::create(repeat01, repeat02, repeat03, repeat04, repeat05, repeat06, repeat07, actionDone, NULL);
 	movie->runAction(seqa);
 }
 void HelloWorld::showdie() {
@@ -2238,6 +2419,9 @@ void HelloWorld::showdie() {
 	auto die = Animate::create(loadAnimateByTime("movie//05_lose//05-lose.gif", 1, false));
 	auto repeat = RepeatForever::create(die);
 	movie->runAction(repeat);
+
+	SimpleAudioEngine::getInstance()->stopBackgroundMusic();
+	SimpleAudioEngine::getInstance()->playBackgroundMusic("MovieMusic//die.mp3");
 }
 void HelloWorld::preLoad() {
 	PopScene * popLayer1 = PopScene::create("UI//A.png", "啊，那边的姐姐，请帮帮我！", 1);
@@ -2260,4 +2444,16 @@ void HelloWorld::setJudgement() {
 	Image* backgroundImage = new Image();
 	backgroundImage->initWithImageFile("background1_1_1in.png");
 	c_data = backgroundImage->getData();
+}
+
+void HelloWorld::showJiaocheng(string i) {
+	Sprite* tempjiaocheng = Sprite::create(i);
+	m_UI_jiaocheng->addChild(tempjiaocheng);
+	auto preFade = FadeOut::create(0.0);
+	auto fadein = FadeIn::create(0.5);
+	auto delay = DelayTime::create(3);
+	auto fadeout = FadeOut::create(0.5);
+	auto seq = Sequence::create(preFade,fadein, delay, fadeout, NULL);
+	tempjiaocheng->runAction(seq);
+	jiaocheng++;
 }

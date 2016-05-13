@@ -34,6 +34,7 @@ public:
 	void initItemMenu();
 	void stopAnimate();
 	void reStartGame();
+	void reStartGameWithOP();
 	void playerAction(Animation* action,int i);
 	void playerAction(Animation* action, int i,string Name);
 	void initAnimate();
@@ -65,6 +66,7 @@ public:
 	void playerAction();
 	void preLoad();
 	void setJudgement();
+	void showJiaocheng(string i);
 	void canMove(float delta);
 	void showItem(string ItemName);
 	void showTool(string ItemName);
@@ -85,6 +87,7 @@ private:
 	bool die;
 	bool down;
 	double moveV;
+	int voiceId;
 	Node* rootNode;
 	Sprite* player;
 	Sprite* princess;
@@ -112,6 +115,7 @@ private:
 	bool onStair;
 	bool onxiepo;
 	bool standBy;
+	int jiaocheng;
 	bool end;
 	bool changingTool;
 	bool Location; // false = left  right = true
@@ -180,6 +184,7 @@ private:
 	Sprite* camera;
 	Sprite* tempitem;
 	Layer* m_UI_Movie;          //电影层 最最上层
+	Layer* m_UI_jiaocheng;
 	Layer* m_UI_Dialog;			//对话框层 最高层
 	Layer* m_UI_Tool;			//工具栏层 次高层
 	Layer* m_UI_Frontground;
