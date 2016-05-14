@@ -1,5 +1,6 @@
 #include "AppDelegate.h"
 #include "HelloWorldScene.h"
+#include "LoadScene.h"
 #include "popScence.h"
 USING_NS_CC;
 
@@ -27,14 +28,12 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
     if(!glview) {
-		glview = GLViewImpl::createWithRect("HelloCpp", Rect(0, 0, 1920, 1080));
+		glview = GLViewImpl::createWithRect("HelloCpp", Rect(0,0,1920, 1080));
         director->setOpenGLView(glview);
     }
-
-    director->getOpenGLView()->setDesignResolutionSize(1920, 1080, ResolutionPolicy::SHOW_ALL);
-
-    // turn on display FPS
-    director->setDisplayStats(true);
+	int a = 1920;
+	int b = 1080;
+    director->getOpenGLView()->setDesignResolutionSize(a, b, ResolutionPolicy::SHOW_ALL);
 
     // set FPS. the default value is 1.0/60 if you don't call this
     director->setAnimationInterval(1.0 / 60);

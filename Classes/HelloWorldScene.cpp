@@ -41,8 +41,8 @@ void HelloWorld::setScene() {
 	stairground_1 = Sprite::create("frontGround2//front(stage).png");
 	stairground_1->setPosition(stairground_1->getContentSize() / 2);
 
-	background = Sprite::create("background05-09.jpg");
-	background->setPosition(background->getContentSize() / 2);
+	background = Sprite::create();
+	background->setPosition(Size(9216, 7776) / 2);
 
 	//set the jugement background
 
@@ -51,18 +51,19 @@ void HelloWorld::setScene() {
 }
 
 void HelloWorld::setGame() {
+	player = Sprite::create("player1.png");
+	princess = Sprite::create("princess.png");
+	dad = Sprite::create("dad.png");
+	mom = Sprite::create("mom.png");
 	player->setAnchorPoint(Vec2(0.514, 0.5));
 
 	//init player animation, play stand
-	auto playerActionStand = ((Player*)player->getUserData())->getActionStand();
-	actorContinuousAction(player, playerActionStand, 0);
 
 	//初始方向朝左
 	player->runAction(FlipX::create(true));
 	princess->setName("princess");
 	//去掉studio中的背景
-	auto backgroundTemp = static_cast<Sprite*>(rootNode->getChildByName("background1_1out"));
-	backgroundTemp->removeFromParentAndCleanup(true);
+
 	//添加studio中的对象物体
 	auto Contact = rootNode->getChildByName("Contact");
 	contactVector = Contact->getChildren();
@@ -79,71 +80,8 @@ void HelloWorld::setGame() {
 	auto Door = rootNode->getChildByName("Door");
 	doorsVector = Door->getChildren();
 
-	auto Object = rootNode->getChildByName("Object");
-	Object->setVisible(false);
-	objectsVector = Object->getChildren();
-	for (int i = 0; i < objectsVector.size(); i++) {
-		Sprite *projectile = (CCSprite *)objectsVector.at(i);
-		Construct *newObject = new Construct(projectile->getName(), i);
-		projectile->setUserData(newObject);
-	}
 
-	auto uselessObject = rootNode->getChildByName("UselessObject");
-	uselessObjectsVector = uselessObject->getChildren();
-	for (int i = 0; i < uselessObjectsVector.size(); i++) {
-		Sprite *projectile = (CCSprite *)uselessObjectsVector.at(i);
-		ObjectMy *newObject;
-		if (projectile->getName() == "Object013") {
-			newObject = new ObjectMy(projectile->getName(), i, false, false);
-		}
-		else {
-			newObject = new ObjectMy(projectile->getName(), i, true, false);
-		}
-		projectile->setUserData(newObject);
-	}
-
-	auto scareObject = rootNode->getChildByName("ScareObject");
-	scareObjectsVector = scareObject->getChildren();
-	for (int i = 0; i < scareObjectsVector.size(); i++) {
-		Sprite *projectile = (CCSprite *)scareObjectsVector.at(i);
-		ObjectMy *newObject = new ObjectMy(projectile->getName(), i, false, false);
-		projectile->setUserData(newObject);
-	}
-
-	auto doorObject = rootNode->getChildByName("DoorObject");
-	doorObjectsVector = doorObject->getChildren();
-	for (int i = 0; i < doorObjectsVector.size(); i++) {
-		Sprite *projectile = (CCSprite *)doorObjectsVector.at(i);
-		ObjectMy *newObject = new ObjectMy(projectile->getName(), i, false, false);
-		projectile->setUserData(newObject);
-	}
-
-	auto damageObject = rootNode->getChildByName("DamageObject");
-	damageObjectsVector = damageObject->getChildren();
-	for (int i = 0; i < damageObjectsVector.size(); i++) {
-		Sprite *projectile = (CCSprite *)damageObjectsVector.at(i);
-		ObjectMy *newObject;
-		newObject = new ObjectMy(projectile->getName(), i, false, true);
-		projectile->setUserData(newObject);
-	}
-
-	usefulObject = rootNode->getChildByName("UsefulObject");
-	usefulObjectsVector = usefulObject->getChildren();
-	for (int i = 0; i < usefulObjectsVector.size(); i++) {
-		Sprite *projectile = (CCSprite *)usefulObjectsVector.at(i);
-		ObjectMy *newObject;
-		if (projectile->getName() == "Object016" || projectile->getName() == "Object031") {
-			newObject = new ObjectMy(projectile->getName(), i, false, false, -1);
-		}
-		else {
-			newObject = new ObjectMy(projectile->getName(), i, false, false);
-		}
-		projectile->setUserData(newObject);
-		if (projectile->getName() == "Object025") {
-			newObject->pushActionVector(2, false, 1);
-			newObject->pushActionVector(3, false, -1);
-		}
-	}
+	
 
 	auto Stair = rootNode->getChildByName("Stair");
 	stairsVector = Stair->getChildren();
@@ -171,14 +109,15 @@ void HelloWorld::setGame() {
 	auto zone002 = rootNode->getChildByName("Zone")->getChildByName("Zone002");
 	setPlayerPositionByZone(player, zone001);
 	setPlayerPositionByZone(princess, zone002);
-	camera = Sprite::create("camera.jpg");
+	camera = Sprite::create();
 	camera->setPosition(player->getPosition() + Vec2(384, 216));
-	//player->setPosition(Vec2(2200, 1200));
+	player->setPosition(Vec2(2200, 1200));
 
 	dad->setName("Dad");
 	auto zone006 = rootNode->getChildByName("Zone")->getChildByName("Zone006");
 	setPlayerPositionByZone(dad, zone006);
-	actorPlayAction(dad, dadstand, 1);
+
+
 
 	mom->setName("mom");
 	mom->setPosition(-100, -100);
@@ -212,10 +151,10 @@ void HelloWorld::configPhy() {
 	}
 
 	//init edge physicsbody
-	auto body = PhysicsBody::createEdgeBox(background->getContentSize(), PHYSICSBODY_MATERIAL_DEFAULT, 3);
+	auto body = PhysicsBody::createEdgeBox(Size(9216,7776), PHYSICSBODY_MATERIAL_DEFAULT, 3);
 	auto edgeNode = Node::create();
 	body->setGravityEnable(true);
-	edgeNode->setPosition(background->getContentSize() / 2);
+	edgeNode->setPosition(Size(9216, 7776) / 2);
 	edgeNode->setPhysicsBody(body);
 	this->addChild(edgeNode);
 
@@ -328,6 +267,13 @@ bool HelloWorld::init()
 	{
 		return false;
 	}
+	damageObjecti = 1;
+	loadopi = 1;
+	backX = 1152;
+	backY = 6804;
+	numofBack = 1;
+	backgroundVoice = 0.5;
+	effectVoice = 0.5;
 	moveV = -200 * 1.3*1.5;
 	rotation = 0;
 	playerState = 0;
@@ -352,35 +298,27 @@ bool HelloWorld::init()
 	rootNode = CSLoader::createNode("MainScene.csb");
 	CCSpriteFrameCache *pFrameCache = CCSpriteFrameCache::sharedSpriteFrameCache();
 	pFrameCache->addSpriteFramesWithFile("UI//Plist1.plist");
+	initobject(0.5);
+	preScence();
 	initLayer();
-	initAnimate();
 	initItemMenu();
-	initActor();
+	schedule(schedule_selector(HelloWorld::loadop), 0.1, kRepeatForever, 0);
 	setScene();
 	setJudgement();
 	setGame();
 	configPhy();
-	
-	configSchedule();
 	configEventListener();
+	//initobject(0.1);
+	initActor(0.1);
 	preloadMusic();
-	initop();
 	preLoad();
-	auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object016");
-	auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
-	auto objectAction = objectData->objectplay();
-	Animate* objectPlay = Animate::create(objectAction);
-	object->runAction(objectPlay);
-	auto object031 = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object031");
-	auto objectData031 = (ObjectMy*)(((Sprite*)object031)->getUserData());
-	auto objectAction031 = objectData031->objectplay();
-	Animate* objectPlay031 = Animate::create(objectAction031);
-	object031->runAction(objectPlay031);
 
 	//background follow
 	//auto follow = Follow::create(camera);
 	//this->runAction(follow);
 	//event listener
+	SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(0.5);
+	SimpleAudioEngine::getInstance()->setEffectsVolume(0.5);
 
 	return true;
 }
@@ -404,11 +342,12 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 	if (m_UI_Movie->getChildByTag(1) != NULL) {
 		m_UI_Movie->removeChildByTag(1);
 		auto follow = Follow::create(camera);
-		auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object030");
+
+		/*auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object030");
 		auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
 		auto objectAction = objectData->objectplay();
 		Animate* objectPlay = Animate::create(objectAction);
-		object->runAction(objectPlay);
+		object->runAction(objectPlay);*/
 
 		auto follow2 = Follow::create(camera);
 		this->runAction(follow);
@@ -417,7 +356,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 
 		SimpleAudioEngine::getInstance()->stopAllEffects();
 		SimpleAudioEngine::getInstance()->playBackgroundMusic("Music//BGM.mp3", true);
-
+		configSchedule();
 		showJiaocheng("jiaocheng//01.png");
 	}
 	if (m_UI_Movie->getChildByTag(4) != NULL) {
@@ -442,6 +381,44 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 			endChoice->setVisible(false);
 		}
 	}
+	if (keyCode == EventKeyboard::KeyCode::KEY_LEFT_ARROW) {
+		if (catalog->isVisible()) {
+			if (arrowTimes == 0) {
+				if (backgroundVoice > 0) {
+					backgroundVoice -= 0.1;
+					SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(SimpleAudioEngine::getInstance()->getBackgroundMusicVolume()-0.1);
+				}
+			}
+			if (arrowTimes == 1) {
+				if (effectVoice > 0) {
+					effectVoice -= 0.1;
+					SimpleAudioEngine::getInstance()->setBackgroundMusicVolume((SimpleAudioEngine::getInstance()->getEffectsVolume() - 0.1));
+				}
+			}
+			MusicTimer->setPercentage(backgroundVoice * 100);
+			SoundTimer->setPercentage(effectVoice * 100);
+		}
+	}
+
+	if (keyCode == EventKeyboard::KeyCode::KEY_RIGHT_ARROW) {
+		if (catalog->isVisible()) {
+			if (arrowTimes == 0) {
+				if (backgroundVoice < 1) {
+					backgroundVoice += 0.1;
+					SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(backgroundVoice);
+				}
+			}
+			if (arrowTimes == 1) {
+				if (effectVoice < 1) {
+					effectVoice += 0.1;
+					SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(effectVoice);
+				}
+			}
+		}
+		MusicTimer->setPercentage(backgroundVoice * 100);
+		SoundTimer->setPercentage(effectVoice * 100);
+	}
+
 	if (keyCode == EventKeyboard::KeyCode::KEY_UP_ARROW) {
 		if (catalog->isVisible()) {
 			if (arrowTimes != 0) {
@@ -519,7 +496,9 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 				catalog->setVisible(true);
 				arrow->setVisible(true);
 				MusicTimer->setVisible(true);
+				MusicTimer->setPercentage(backgroundVoice * 100);
 				SoundTimer->setVisible(true);
+				SoundTimer->setPercentage(effectVoice * 100);
 				arrowTimes = 0;
 				canmove = false;
 			}
@@ -608,7 +587,7 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 					itemMenu->addChild(Tool);
 
 					SimpleAudioEngine::getInstance()->stopAllEffects();
-					SimpleAudioEngine::getInstance()->playEffect("Music//A.mp3");
+					SimpleAudioEngine::getInstance()->playEffect("Music//hairpin.mp3");
 					rootNode->getChildByName("Door")->removeChildByName("Wall_TEMP_12");
 					itemsVectorInMap.eraseObject(projectile);
 				}
@@ -630,10 +609,12 @@ void HelloWorld::onKeyPressed(EventKeyboard::KeyCode keyCode, cocos2d::Event* ev
 							rootNode->getChildByName("Door")->removeChildByName("Door001");
 							auto posZone4 = rootNode->getChildByName("Zone")->getChildByName("Zone004");
 							auto princessMoveDone = CallFuncN::create([&](Ref* sender) {
+								auto prstand = ((Princess*)princess->getUserData())->getActionStand();
 								Animate* prstand_ = Animate::create(prstand);
 								princess->stopAllActions();
 								princess->runAction(prstand_);
 							});
+							auto prstand = ((Princess*)princess->getUserData())->getActionStand();
 							Animate* prstand_ = Animate::create(prstand);
 							princess->stopAllActions();
 							princess->setFlipX(true);
@@ -1589,7 +1570,7 @@ void HelloWorld::drop() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_front_x = player->getPosition().x;
 	auto a = player->getContentSize();
-	unsigned int image_front_y = background->getContentSize().height - (player->getPosition().y - player->getContentSize().height / 2) + 5;
+	unsigned int image_front_y = Size(9216, 7776).height - (player->getPosition().y - player->getContentSize().height / 2) + 5;
 	unsigned int image_after_x = image_front_x + 40;
 	unsigned int image_after_y = image_front_y;
 	ccColor4B c_front = getPixelColorByPoint(Point(image_front_x, image_front_y));
@@ -1636,7 +1617,7 @@ void HelloWorld::fixPosition() {
 	if (!onStair&&!jumping&&!droping) {
 		Point playerPosition = player->getPosition();
 		unsigned int image_x = player->getPosition().x;
-		unsigned int image_y = background->getContentSize().height -
+		unsigned int image_y = Size(9216, 7776).height -
 			(player->getPosition().y - player->getContentSize().height / 2);
 		ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 		Vec2 speed = player->getPhysicsBody()->getVelocity();
@@ -1651,7 +1632,7 @@ void HelloWorld::fixPosition() {
 	}
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x;
-	unsigned int image_y = background->getContentSize().height -
+	unsigned int image_y = Size(9216, 7776).height -
 		(player->getPosition().y - player->getContentSize().height / 2);
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	leftBottom = getPixelColorByPoint(Point(image_x, image_y + 20));
@@ -1659,7 +1640,7 @@ void HelloWorld::fixPosition() {
 int HelloWorld::wallBesideLeft() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x - 10;
-	unsigned int image_y = background->getContentSize().height -
+	unsigned int image_y = Size(9216, 7776).height -
 		(player->getPosition().y - player->getContentSize().height / 2) - 10;
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	image_y -= 20;
@@ -1678,7 +1659,7 @@ int HelloWorld::wallBesideLeft() {
 int HelloWorld::wallBesideRight() {
 	Point playerPosition = player->getPosition();
 	unsigned int image_x = player->getPosition().x + 10;
-	unsigned int image_y = background->getContentSize().height -
+	unsigned int image_y = Size(9216, 7776).height -
 		(player->getPosition().y - player->getContentSize().height / 2) - 10;
 	ccColor4B leftBottom = getPixelColorByPoint(Point(image_x, image_y));
 	image_y -= 20;
@@ -1698,7 +1679,7 @@ ccColor4B HelloWorld::getPixelColorByPoint(Point pos) {
 	unsigned int image_y = pos.y;
 	ccColor4B c = { 0, 0, 0 ,0 };
 	unsigned int *pixel = (unsigned int *)c_data;
-	pixel = pixel + (image_y * (int)background->getContentSize().width) * 1 + image_x * 1;
+	pixel = pixel + (image_y * (int)Size(9216, 7776).width) * 1 + image_x * 1;
 	c.r = *pixel & 0xff;
 	c.g = (*pixel >> 8) & 0xff;
 	c.b = (*pixel >> 16) & 0xff;
@@ -1730,57 +1711,6 @@ void HelloWorld::setPlayerPositionByZone(Sprite* player, Node* zone) {
 	player->setPosition(pos);
 }
 
-void HelloWorld::initAnimate() {
-	/*ptemp = loadAnimate("playertemp.gif", 1, false);
-	princessStand = loadAnimate("pricness.gif", -1, false);
-	princessTemp = loadAnimate("temp.gif", 1, false);
-	pStand = loadAnimate("gif//000-stand.gif", -1, false);
-	pWalk = loadAnimate("gif//001-walk.gif", -1, false);
-	pjump = loadAnimate("gif//005-jump.gif", 1, false);
-	pfall = loadAnimate("gif//006-fall.gif", 1, false);
-	precovery = loadAnimate("gif//007-recovery.gif", 1, false);
-	pdownStair = loadAnimate("gif//003-down-stair.gif", -1, false);
-	pupStair = loadAnimate("gif//004-up-stair.gif", -1, false);
-	popenWindow = loadAnimate("gif//009-window-open.gif", 1, false);
-	pnoidea = loadAnimate("gif//008-no-idea.gif", 1, false);
-	patticopen = loadAnimate("gif//010-attic-open.gif", 1, false);
-	poutfire = loadAnimate("gif//011-outfire.gif", 1, false);
-	pdooropen = loadAnimate("gif//012-door-open.gif", 1, false);
-	poilthrow = loadAnimate("gif//013-oil-throw.gif", 1, false);
-	pfire = loadAnimate("gif//014-fire.gif", 1, false);
-	pturn = loadAnimate("gif//015-turn.gif", 1, false);
-	pclimb = loadAnimate("gif//016-climb.gif", -1, false);
-	pget = loadAnimate("gif//018-get.gif", 1, false);
-	psearch = loadAnimate("gif//017-search.gif", 1, false);*/
-
-	prstand = loadAnimate("gifByPricness//000-stand.gif", -1, false);
-	prkao = loadAnimate("gifByPricness//001-kao.gif", 1, false);
-	prtalk = loadAnimate("gifByPricness//002-talk.gif", 1, false);
-	prthrow = loadAnimate("gifByPricness//003-throw.gif", 1, false);
-
-	dadstand = loadAnimate("gifByDad//001-stand.gif", -1, false);
-	dadtalk = loadAnimate("gifByDad//002-talk.gif", 1, false);
-	dadrun = loadAnimate("gifByDad//003-run.gif", -1, false);
-	dadstanby = loadAnimate("gifByDad//004-standby.gif", 1, false);
-	dadoutfire = loadAnimate("gifByDad//005-outfire.gif", -1, false);
-	//fall
-}
-void HelloWorld::playerAction() {
-	auto actionDone = CallFuncN::create([&](Ref* sender) {
-		canmove = true;
-		stopAnimate();
-		Animate* aStand = Animate::create(pStand);
-		aStand->setTag(0);
-		player->runAction(aStand);
-		playerState = 0;
-	});
-	canmove = false;
-	Animate* playerTempAction = Animate::create(ptemp);
-	stopAnimate();
-	auto action = Sequence::create(playerTempAction, actionDone, NULL);
-	action->setTag(66);
-	player->runAction(action);
-}
 Animation* HelloWorld::loadAnimateByTime(string path, double time, bool back) {
 	GifAnimationDef* def = new GifAnimationDef;
 	def->loops = 1;
@@ -1906,6 +1836,7 @@ void HelloWorld::princesscomming() {
 	auto cameraMoveDone = CallFuncN::create([&](Ref* sender) {
 		auto actionDone = CallFuncN::create([&](Ref* sender) {
 			addNewItem("hairpin", Vec2(2734, 3947), 1, 2, 3, 4);
+			auto prstand = ((Princess*)princess->getUserData())->getActionStand();
 			Animate* princessStand = Animate::create(prstand);
 			princess->stopAllActions();
 			princess->runAction(princessStand);
@@ -1913,6 +1844,9 @@ void HelloWorld::princesscomming() {
 		});
 		canmove = false;
 		princess->stopAllActions();
+		auto prkao = ((Princess*)princess->getUserData())->getActionPriRelyOn();
+		auto prtalk = ((Princess*)princess->getUserData())->getActionTalk();
+		auto prthrow = ((Princess*)princess->getUserData())->getActionPriThrow();
 		Animate* princessKao = Animate::create(prkao);
 		Animate* princessTalk = Animate::create(prtalk);
 		Animate* princessThrow = Animate::create(prthrow);
@@ -1985,13 +1919,11 @@ void HelloWorld::initItemMenu() {
 	SoundTimer->setType(kCCProgressTimerTypeBar);
 	SoundTimer->setMidpoint(ccp(0, 0));
 	SoundTimer->setBarChangeRate(ccp(1, 0));
-	SoundTimer->setPercentage(100);
 	SoundTimer->setVisible(false);
 
 	MusicTimer->setType(kCCProgressTimerTypeBar);
 	MusicTimer->setMidpoint(ccp(0, 0));
 	MusicTimer->setBarChangeRate(ccp(1, 0));
-	MusicTimer->setPercentage(100);
 	MusicTimer->setVisible(false);
 	m_UI_Tool->addChild(itemMenu);
 	m_UI_Tool->addChild(lifeSlot);
@@ -2005,23 +1937,24 @@ void HelloWorld::initItemMenu() {
 	m_UI_Tool->addChild(bigArrow);
 }
 
-void HelloWorld::initActor() {
-	player = Sprite::create("player1.png");
-	princess = Sprite::create("princess.png");
-	dad = Sprite::create("dad.png");
-	mom = Sprite::create("mom.png");
-
+void HelloWorld::initActor(float dt) {
 	Player* newPlayer = new Player("Player", 0);
 	Princess* newPrincess = new Princess("Princess", 1);
 	Dad* newDad = new Dad("Dad", 2);
 	player->setUserData(newPlayer);
 	princess->setUserData(newPrincess);
 
+	auto prstand = ((Princess*)princess->getUserData())->getActionStand();
 	Animate* prstand_ = Animate::create(prstand);
 	princess->stopAllActions();
 	princess->runAction(prstand_);
 
 	dad->setUserData(newDad);
+	auto playerActionStand = ((Player*)player->getUserData())->getActionStand();
+	actorContinuousAction(player, playerActionStand, 0);
+
+	auto dadstand = ((Dad*)dad->getUserData())->getActionStand();
+	actorPlayAction(dad, dadstand, 1);
 }
 
 void HelloWorld::actorSingleAction(Sprite* actor, Animation* action, int actionnum) {
@@ -2080,42 +2013,6 @@ void HelloWorld::showDialog(float delta) {
 void HelloWorld::preloadMusic() {
 	SimpleAudioEngine::getInstance()->preloadBackgroundMusic("Music//BGM.mp3");
 	SimpleAudioEngine::getInstance()->preloadEffect("MovieMusic//op01.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("MovieMusic//standby.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//A.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//B.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//C.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//D.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//E.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//F.mp3");
-
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V01.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V02.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V04.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V05.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V09.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V10.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V11.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V12.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V14.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V16.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V23.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V24.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V25.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("Music//V27.mp3");
-
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao01.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao02.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao03.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao04.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao05.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao06.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao07.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GaoGao//GaoGao08.mp3");
-
-
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GuaGua//GuaGua01.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GuaGua//GuaGua02.mp3");
-	SimpleAudioEngine::getInstance()->preloadEffect("ActorVoice//GuaGua//GuaGua03.mp3");
 }
 void HelloWorld::playerGetHurt() {
 	auto playerData = (Player*)player->getUserData();
@@ -2173,16 +2070,17 @@ void HelloWorld::reStartGameWithOP() {
 	CCSpriteFrameCache *pFrameCache = CCSpriteFrameCache::sharedSpriteFrameCache();
 	pFrameCache->addSpriteFramesWithFile("UI//Plist1.plist");
 	initLayer();
-	initAnimate();
 	initItemMenu();
-	initActor();
+	//initActor();
 	setScene();
 	setGame();
 	configPhy();
 
 	configSchedule();
 	configEventListener();
-	preloadMusic();
+
+	initobject(0.5);
+	initActor(0.5);
 	initop();
 	//preLoad();
 	auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object016");
@@ -2231,28 +2129,18 @@ void HelloWorld::reStartGame() {
 	CCSpriteFrameCache *pFrameCache = CCSpriteFrameCache::sharedSpriteFrameCache();
 	pFrameCache->addSpriteFramesWithFile("UI//Plist1.plist");
 	initLayer();
-	initAnimate();
 	initItemMenu();
-	initActor();
+	//initActor();
 	setScene();
 	setGame();
 	configPhy();
 
 	configSchedule();
 	configEventListener();
-	preloadMusic();
-	//initop();
+	//preloadMusic();
+	initobject(0.5);
+	initActor(0.5);
 	//preLoad();
-	auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object016");
-	auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
-	auto objectAction = objectData->objectplay();
-	Animate* objectPlay = Animate::create(objectAction);
-	object->runAction(objectPlay);
-	auto object031 = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object031");
-	auto objectData031 = (ObjectMy*)(((Sprite*)object031)->getUserData());
-	auto objectAction031 = objectData031->objectplay();
-	Animate* objectPlay031 = Animate::create(objectAction031);
-	object031->runAction(objectPlay031);
 
 	auto a = player->getPosition() + Vec2(384.0, 216.0) + (!Location)*Vec2(-768, 0);
 	camera->setPosition(a);
@@ -2270,47 +2158,47 @@ void HelloWorld::initop() {
 	movie->setTag(1);
 	movie->setPosition(Vec2(960, 540));
 	m_UI_Movie->addChild(movie);
-	auto op01 = Animate::create(loadAnimateByTime("movie//01_op//01-op-01.gif", 2, false));
+	auto op01 = Animate::create(op01_);
 	auto times = op01->getAnimation()->getTotalDelayUnits();
 	auto repeattime01 = 5.0 / (times*(1.0 / 30));
 	auto repeat01 = Repeat::create(op01, repeattime01);
 
-	auto op02 = Animate::create(loadAnimateByTime("movie//01_op//01-op-02.gif", 2, false));
+	auto op02 = Animate::create(op02_);
 	times = op02->getAnimation()->getTotalDelayUnits();
 	auto repeattime02 = 4.0 / (times*(1.0 / 30));
 	auto repeat02 = Repeat::create(op02, repeattime02);
 
-	auto op03 = Animate::create(loadAnimateByTime("movie//01_op//01-op-03.gif", 2, false));
+	auto op03 = Animate::create(op03_);
 	times = op03->getAnimation()->getTotalDelayUnits();
 	auto repeattime03 = 3.7 / (times*(1.0 / 30));
 	auto repeat03 = Repeat::create(op03, repeattime03);
 
-	auto op04 = Animate::create(loadAnimateByTime("movie//01_op//01-op-04.gif", 2, false));
+	auto op04 = Animate::create(op04_);
 	times = op04->getAnimation()->getTotalDelayUnits();
 	auto repeattime04 = 7.0 / (times*(1.0 / 30));
 	auto repeat04 = Repeat::create(op04, repeattime04);
 
-	auto op05 = Animate::create(loadAnimateByTime("movie//01_op//01-op-05.gif", 2, false));
+	auto op05 = Animate::create(op05_);
 	times = op05->getAnimation()->getTotalDelayUnits();
 	auto repeattime05 = 5.0 / (times*(1.0 / 30));
 	auto repeat05 = Repeat::create(op05, repeattime05);
 
-	auto op06 = Animate::create(loadAnimateByTime("movie//01_op//01-op-06.gif", 2, false));
+	auto op06 = Animate::create(op06_);
 	times = op06->getAnimation()->getTotalDelayUnits();
 	auto repeattime06 = 3.3 / (times*(1.0 / 30));
 	auto repeat06 = Repeat::create(op06, repeattime06);
 
-	auto op07 = Animate::create(loadAnimateByTime("movie//01_op//01-op-07.gif", 2, false));
+	auto op07 = Animate::create(op07_);
 	times = op07->getAnimation()->getTotalDelayUnits();
 	auto repeattime07 = 1.0 / (times*(1.0 / 30));
 	auto repeat07 = Repeat::create(op07, repeattime07);
 
-	auto op08 = Animate::create(loadAnimateByTime("movie//01_op//01-op-08.gif", 2, false));
+	auto op08 = Animate::create(op08_);
 	times = op08->getAnimation()->getTotalDelayUnits();
 	auto repeattime08 = 0.4 / (times*(1.0 / 30));
 	auto repeat08 = Repeat::create(op08, repeattime08);
 
-	auto op09 = Animate::create(loadAnimateByTime("movie//01_op//01-op-09.gif", 2, false));
+	auto op09 = Animate::create(op09_);
 	times = op09->getAnimation()->getTotalDelayUnits();
 	auto repeattime09 = 7.3 / (times*(1.0 / 30));
 	auto repeat09 = Repeat::create(op09, repeattime09);
@@ -2438,9 +2326,6 @@ void HelloWorld::preLoad() {
 	m_UI_preLoad->addChild(popLayer4);
 }
 void HelloWorld::setJudgement() {
-	auto sp = Sprite::create("background1_1_1in.png");
-	this->addChild(sp);
-	auto a = sp->getTexture();
 	Image* backgroundImage = new Image();
 	backgroundImage->initWithImageFile("background1_1_1in.png");
 	c_data = backgroundImage->getData();
@@ -2456,4 +2341,177 @@ void HelloWorld::showJiaocheng(string i) {
 	auto seq = Sequence::create(preFade,fadein, delay, fadeout, NULL);
 	tempjiaocheng->runAction(seq);
 	jiaocheng++;
+}
+
+void HelloWorld::SceneDetla(float delta) {
+	setScene();
+}
+
+void HelloWorld::JudgementDetla(float delta) {
+	setJudgement();
+}
+
+
+void HelloWorld::initobject(float delta) {
+
+	auto Object = rootNode->getChildByName("Object");
+	Object->setVisible(false);
+	objectsVector = Object->getChildren();
+	for (int i = 0; i < objectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)objectsVector.at(i);
+		Construct *newObject = new Construct(projectile->getName(), i);
+		projectile->setUserData(newObject);
+	}
+
+	auto scareObject = rootNode->getChildByName("ScareObject");
+	scareObjectsVector = scareObject->getChildren();
+	for (int i = 0; i < scareObjectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)scareObjectsVector.at(i);
+		ObjectMy *newObject = new ObjectMy(projectile->getName(), i, false, false);
+		projectile->setUserData(newObject);
+	}
+	auto doorObject = rootNode->getChildByName("DoorObject");
+	doorObjectsVector = doorObject->getChildren();
+	for (int i = 0; i < doorObjectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)doorObjectsVector.at(i);
+		ObjectMy *newObject = new ObjectMy(projectile->getName(), i, false, false);
+		projectile->setUserData(newObject);
+	}
+
+	auto damageObject = rootNode->getChildByName("DamageObject");
+	damageObjectsVector = damageObject->getChildren();
+	for (int i = 0; i < damageObjectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)damageObjectsVector.at(i);
+		ObjectMy *newObject;
+		newObject = new ObjectMy(projectile->getName(), i, false, true);
+		projectile->setUserData(newObject);
+	}
+
+	usefulObject = rootNode->getChildByName("UsefulObject");
+	usefulObjectsVector = usefulObject->getChildren();
+	for (int i = 0; i < usefulObjectsVector.size(); i++) {
+		Sprite *projectile = (CCSprite *)usefulObjectsVector.at(i);
+		ObjectMy *newObject;
+		if (projectile->getName() == "Object016" || projectile->getName() == "Object031") {
+			newObject = new ObjectMy(projectile->getName(), i, false, false, -1);
+		}
+		else {
+			newObject = new ObjectMy(projectile->getName(), i, false, false);
+		}
+		projectile->setUserData(newObject);
+		if (projectile->getName() == "Object025") {
+
+			newObject->pushActionVector(2, false, 1);
+			newObject->pushActionVector(3, false, -1);
+		}
+	}
+
+	/*auto object = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object016");
+	auto objectData = (ObjectMy*)(((Sprite*)object)->getUserData());
+	auto objectAction = objectData->objectplay();
+	Animate* objectPlay = Animate::create(objectAction);
+	object->runAction(objectPlay);
+	auto object031 = (Sprite*)rootNode->getChildByName("UsefulObject")->getChildByName("Object031");
+	auto objectData031 = (ObjectMy*)(((Sprite*)object031)->getUserData());
+	auto objectAction031 = objectData031->objectplay();
+	Animate* objectPlay031 = Animate::create(objectAction031);
+	object031->runAction(objectPlay031);*/
+}
+
+void HelloWorld::preScence() {
+	CCTextureCache::sharedTextureCache()->addImage ("frontGround1//front(always).png");
+	CCTextureCache::sharedTextureCache()->addImage("frontGround2//front(stage).png");
+	CCTextureCache::sharedTextureCache()->addImage("background1_1_1in.png");
+	CCTextureCache::sharedTextureCache()->addImage("jiaocheng//01.png");
+	CCTextureCache::sharedTextureCache()->addImage("jiaocheng//02.png");
+	CCTextureCache::sharedTextureCache()->addImage("jiaocheng//03.png");
+	CCTextureCache::sharedTextureCache()->addImage("jiaocheng//04.png");
+}
+void HelloWorld::setBackGround(float dt) {
+	if (numofBack >= 16) {
+		unschedule(schedule_selector(HelloWorld::setBackGround));
+	}
+	if (numofBack <= 16) {
+		std::stringstream ss;
+		std::string str;
+		ss << numofBack;
+		ss >> str;
+		string path = "background//" + str + ".png";
+		auto backpiace = Sprite::create(path);
+		backpiace->setPosition(Vec2(backX, backY));
+		m_UI_Background->addChild(backpiace);
+		if (numofBack % 4 == 0) {
+			backY = backY - 1944;
+			backX = 1152;
+		}
+		else {
+			backX += 2304;
+		}
+		if (numofBack == 16) {
+			initop();
+		}
+		numofBack++;
+	}
+}
+void HelloWorld::loadop(float dt) {
+	switch (loadopi) {
+	case 1:
+		op01_ = loadAnimateByTime("movie//01_op//01-op-01.gif", 1, false);
+		loadopi++;
+		break;
+	case 2:
+		op02_ = loadAnimateByTime("movie//01_op//01-op-02.gif", 1, false);
+		loadopi++;
+		break;
+	case 3:
+		op03_ = loadAnimateByTime("movie//01_op//01-op-03.gif", 1, false);
+		loadopi++;
+		break;
+	case 4:
+		op04_ = loadAnimateByTime("movie//01_op//01-op-04.gif", 1, false);
+		loadopi++;
+		break;
+	case 5:
+		op05_ = loadAnimateByTime("movie//01_op//01-op-05.gif", 1, false);
+		loadopi++;
+		break;
+	case 6:
+		op06_ = loadAnimateByTime("movie//01_op//01-op-06.gif", 1, false);
+		loadopi++;
+		break;
+	case 7:
+		op07_ = loadAnimateByTime("movie//01_op//01-op-07.gif", 1, false);
+		loadopi++;
+		break;
+	case 8:
+		op08_ = loadAnimateByTime("movie//01_op//01-op-08.gif", 1, false);
+		loadopi++;
+		break;
+	case 9:
+		op09_ = loadAnimateByTime("movie//01_op//01-op-09.gif", 1, false);
+		loadopi++;
+		break;
+	case 10:
+		schedule(schedule_selector(HelloWorld::setBackGround), 0.1, kRepeatForever, 0);
+		unschedule(schedule_selector(HelloWorld::loadop));
+		loadopi++;
+		break;
+	default:
+		break;
+	}
+}
+
+void HelloWorld::initDamageObject(float dt) {
+	auto damageObject = rootNode->getChildByName("DamageObject");
+	damageObjectsVector = damageObject->getChildren();
+	if (damageObjecti < damageObjectsVector.size()) {
+		Sprite *projectile = (CCSprite *)damageObjectsVector.at(damageObjecti);
+		ObjectMy *newObject;
+		newObject = new ObjectMy(projectile->getName(), damageObjecti, false, true);
+		projectile->setUserData(newObject);
+		damageObjecti++;
+	}
+	if (damageObjecti >= damageObjectsVector.size()) {
+		unschedule(schedule_selector(HelloWorld::loadop));
+	}
 }

@@ -22,7 +22,6 @@ ObjectMy::ObjectMy(string ObjectNmae, int ObjectNumber, bool back,bool damage_, 
 	actionplay = GifAnimation::getInstance()->createAnimation(*def);
 	damage = damage_;
 	state = 0;
-	preloadVoice();
 }
 string ObjectMy::getObjectName() {
 	return Name;

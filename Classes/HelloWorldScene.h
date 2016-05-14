@@ -19,6 +19,9 @@ public:
 
     // Here's a difference. Method 'init' in cocos2d-x returns bool, instead of returning 'id' in cocos2d-iphone
     virtual bool init();
+	int damageObjecti;
+	float backgroundVoice;
+	float effectVoice;
 	void playerGetTool(Sprite* tool);
 	void update(float dt) override;
 	void setScene();
@@ -26,9 +29,13 @@ public:
 	void configPhy();
 	void configSchedule();
 	void configEventListener();
+	void preScence();
 	bool initLayer();
-	void initActor();
+	void initActor(float dt);
 	void initop();
+	void initobject(float dt);
+	void SceneDetla(float dt);
+	void JudgementDetla(float dt);
 	Animation* getAnimationByPath(string path);
 	void initDialog();
 	void initItemMenu();
@@ -61,10 +68,15 @@ public:
 	void cameraMove(float delta);
 	void cameraMoveLeft(float delta);
 	void itemMenuMove(float delta);
+	void frontg(float delta);
 	void conTact(float delta);
 	void showDialog(float delta);
+	void initDamageObject(float delta);
+	void setBackGround(float delta);
 	void playerAction();
 	void preLoad();
+	void loadop(float delta);
+	void loadCallBack();
 	void setJudgement();
 	void showJiaocheng(string i);
 	void canMove(float delta);
@@ -81,6 +93,10 @@ public:
     CREATE_FUNC(HelloWorld);
 private:
 	bool left;
+	int loadopi = 1;
+	int numofBack;
+	int backX;
+	int backY;
 	bool right;
 	bool cameramove;
 	bool up;
@@ -125,43 +141,21 @@ private:
 	int arrowTimes;
 	int bigArrowTimes;
 	double dropspeed;
-	Animation* pStand;
-	Animation* pWalk;
-	Animation* pjump;
-	Animation* ptemp;
-	Animation* pfall;
-	Animation* poutfire;
-	Animation* pdooropen;
-	Animation* poilthrow;
-	Animation* pfire;
-	Animation* pturn;
-	Animation* precovery;
-	Animation* pdownStair;
-	Animation* pupStair;
-	Animation *princessStand;
-	Animation *princessTemp;
-	Animation* popenWindow;
-	Animation* patticopen;
-	Animation* pnoidea;
-	Animation* pget;
-	Animation* psearch;
-	Animation* pclimb;
-
-	Animation* prstand;
-	Animation* prkao;
-	Animation* prtalk;
-	Animation* prthrow;
-
-	Animation* dadstand;
-	Animation* dadtalk;
-	Animation* dadrun;
-	Animation* dadstanby;
-	Animation* dadoutfire;
 
 	Animation* object002;
 	Animation* object004;
 	Animation* object010;
 	Animation* object013;
+
+	Animation* op01_;
+	Animation* op02_;
+	Animation* op03_;
+	Animation* op04_;
+	Animation* op05_;
+	Animation* op06_;
+	Animation* op07_;
+	Animation* op08_;
+	Animation* op09_;
 
 	ccColor4B stairBlue;
 	Node* usefulObject;
