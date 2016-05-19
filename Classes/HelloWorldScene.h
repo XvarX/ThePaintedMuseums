@@ -20,10 +20,15 @@ public:
     // Here's a difference. Method 'init' in cocos2d-x returns bool, instead of returning 'id' in cocos2d-iphone
     virtual bool init();
 	int damageObjecti;
+	int numOfPre;
+	int loadBackNum;
+	bool restartwithoutop;
+	bool canleave;
 	float backgroundVoice;
 	float effectVoice;
 	void playerGetTool(Sprite* tool);
 	void update(float dt) override;
+	void showInitAnimate();
 	void setScene();
 	void setGame();
 	void configPhy();
@@ -32,7 +37,7 @@ public:
 	void preScence();
 	bool initLayer();
 	void initActor(float dt);
-	void initop();
+	void initop(float dt);
 	void initobject(float dt);
 	void SceneDetla(float dt);
 	void JudgementDetla(float dt);
@@ -59,7 +64,9 @@ public:
 	void playerGetHurt();
 	void actorContinuousAction(Sprite* actor, Animation* action, int actionnum);
 	void actorSingleAction(Sprite* actor, Animation* action, int actionnum);
-
+	void loadBackGround(float delta);
+	void loadPreGround(float delta);
+	void loadStageGround(float delta);
 	void showend1();
 	void showend2();
 	void showdie();
@@ -73,6 +80,7 @@ public:
 	void showDialog(float delta);
 	void initDamageObject(float delta);
 	void setBackGround(float delta);
+	void setPreGround(float delta);
 	void playerAction();
 	void preLoad();
 	void loadop(float delta);
@@ -92,11 +100,15 @@ public:
     // implement the "static create()" method manually
     CREATE_FUNC(HelloWorld);
 private:
+	int dadState;
+	int princessState;
 	bool left;
 	int loadopi = 1;
 	int numofBack;
 	int backX;
 	int backY;
+	int frontX;
+	int frontY;
 	bool right;
 	bool cameramove;
 	bool up;
@@ -147,6 +159,8 @@ private:
 	Animation* object010;
 	Animation* object013;
 
+	Animation* dadOutFire;
+
 	Animation* op01_;
 	Animation* op02_;
 	Animation* op03_;
@@ -156,6 +170,15 @@ private:
 	Animation* op07_;
 	Animation* op08_;
 	Animation* op09_;
+	Animation* op10_;
+
+	Animation* end01_;
+	Animation* end02_;
+	Animation* end03_;
+	Animation* end04_;
+	Animation* end05_;
+	Animation* end06_;
+	Animation* end07_;
 
 	ccColor4B stairBlue;
 	Node* usefulObject;

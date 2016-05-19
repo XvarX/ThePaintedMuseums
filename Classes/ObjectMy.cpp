@@ -15,7 +15,7 @@ ObjectMy::ObjectMy(string ObjectNmae, int ObjectNumber, bool back,bool damage_, 
 	GifAnimationDef* def = new GifAnimationDef;
 	def->loops = times;						// 循环次数
 	def->filePath = path;				// 文件路径
-	def->delayPerUnit = 1.0 / 30;			// 每帧间隔
+	def->delayPerUnit = 0.03;			// 每帧间隔
 	def->restoreOriginalFrame = back;	// 还原初始状态
 
 										// 创建动画
@@ -45,7 +45,7 @@ void ObjectMy::pushActionVector(int i, bool back, int time) {
 		GifAnimationDef* def = new GifAnimationDef;
 		def->loops = time;						// 循环次数
 		def->filePath = path;				// 文件路径
-		def->delayPerUnit = 1.0 / 30;			// 每帧间隔
+		def->delayPerUnit = 0.03;			// 每帧间隔
 		def->restoreOriginalFrame = back;	// 还原初始状态
 
 											// 创建动画
@@ -63,7 +63,7 @@ void ObjectMy::changeObjectAction(int i, bool back, int times_) {
 	GifAnimationDef* def = new GifAnimationDef;
 	def->loops = times;						// 循环次数
 	def->filePath = path;				// 文件路径
-	def->delayPerUnit = 1.0 / 30;			// 每帧间隔
+	def->delayPerUnit = 0.03;			// 每帧间隔
 	def->restoreOriginalFrame = back;	// 还原初始状态
 
 										// 创建动画

@@ -66,7 +66,7 @@ Animation* Princess::getActionPriDownStair() {
 //Derived Dad Class
 Dad::Dad(string ActorName, int ActorNumber) :Actor(ActorName, ActorNumber) {
 	dadStandBy = initAnimationByName("dadStandBy", 1, false);
-	dadOutFire = initAnimationByName("dadOutFire", -1, false);
+	dadOutFire = initAnimationByName("dadOutFire", 1, true);
 }
 Animation* Dad::getActionDadStandBy() {
 	return dadStandBy;
